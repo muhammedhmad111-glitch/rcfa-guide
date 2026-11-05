@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="ملخص تفاعلي بالعربي لكتاب Practical Root Cause Failure Analysis">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>دليل RCFA العملي</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Reem+Kufi:wght@500;700&display=swap">
+<style>
+/* Layout: field-manual sheets on a faint drafting grid; sticky chapter rail; each chapter = explanation + one live drawing + case files */
+:root{
+  --paper:#F2F4F0; --panel:#FFFFFF; --ink:#16211D; --muted:#5A6963; --line:#D2DAD5; --grid:rgba(30,91,75,.07);
+  --machine:#1E5B4B; --machine-soft:#E1ECE7; --signal:#C98A00; --signal-soft:#FBF0D6;
+  --fail:#BF3A2A; --fail-soft:#F8E3DF; --ok:#2E7A4D; --cool:#2B6A96; --cool-soft:#E0ECF5;
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1412; --panel:#151D1A; --ink:#E5ECE8; --muted:#93A39C; --line:#28342F; --grid:rgba(79,179,148,.06);
+  --machine:#52B696; --machine-soft:#1A2D27; --signal:#F0B43A; --signal-soft:#2E2715;
+  --fail:#E8644F; --fail-soft:#331C18; --ok:#5DC187; --cool:#62A9D8; --cool-soft:#16263A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1412; --panel:#151D1A; --ink:#E5ECE8; --muted:#93A39C; --line:#28342F; --grid:rgba(79,179,148,.06);
+  --machine:#52B696; --machine-soft:#1A2D27; --signal:#F0B43A; --signal-soft:#2E2715;
+  --fail:#E8644F; --fail-soft:#331C18; --ok:#5DC187; --cool:#62A9D8; --cool-soft:#16263A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+h2{font-size:clamp(1.6rem,3.4vw,2.2rem)}
+h3{font-size:1.2rem;font-weight:700}
+p{margin:0}
+.en{font-family:var(--f-mono);font-size:.86em;direction:ltr;unicode-bidi:isolate;color:var(--muted)}
+.mono{font-family:var(--f-mono);direction:ltr;unicode-bidi:isolate}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+
+/* hero */
+.hero{padding-block:40px 28px;border-bottom:2px solid var(--ink)}
+.hero-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:32px;align-items:center}
+.tagline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.85rem;color:var(--muted);letter-spacing:.02em}
+.stamp{border:1.5px solid var(--fail);color:var(--fail);padding:2px 10px;border-radius:3px;font-family:var(--f-mono);font-size:.78rem;font-weight:600;transform:rotate(-2deg);display:inline-block}
+.hero h1{font-size:clamp(2.2rem,6vw,3.6rem);margin-block:10px 12px;font-weight:700}
+.hero h1 b{color:var(--machine);font-family:var(--f-mono);font-weight:600}
+.lead{font-size:1.08rem;color:var(--muted);max-width:60ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-size:.9rem}
+.facts span b{font-family:var(--f-mono);color:var(--ink)}
+.hero-fig{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px}
+.hero-fig figcaption{font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* nav */
+nav.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--paper);border-bottom:1px solid var(--line)}
+.rail-in{display:flex;gap:6px;overflow-x:auto;padding-block:10px;scrollbar-width:thin}
+.rail a{flex:none;text-decoration:none;color:var(--ink);font-size:.86rem;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:var(--panel);white-space:nowrap}
+.rail a:hover,.rail a.on{border-color:var(--machine);color:var(--machine)}
+.rail a i{font-style:normal;font-family:var(--f-mono);color:var(--muted);margin-inline-end:4px}
+
+section.ch{padding-block:56px 20px}
+.ch-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:22px}
+.ch-num{font-family:var(--f-mono);font-size:2.6rem;line-height:1;color:var(--machine);font-weight:600;min-width:2.2ch}
+.ch-head p{color:var(--muted);margin-top:6px;max-width:68ch}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cols>*{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+.card h3{margin-bottom:8px}
+.card p+p{margin-top:8px}
+.label{font-size:.75rem;letter-spacing:.06em;color:var(--muted);font-weight:700}
+ul.clean{margin:8px 0 0;padding-inline-start:18px}
+ul.clean li{margin-block:3px}
+.note{border-inline-start:4px solid var(--signal);background:var(--signal-soft);padding:12px 14px;border-radius:0 4px 4px 0;font-size:.95rem}
+.warn{border-inline-start-color:var(--fail);background:var(--fail-soft)}
+.key{border-inline-start-color:var(--machine);background:var(--machine-soft)}
+.formula{font-family:var(--f-mono);direction:ltr;text-align:left;background:var(--paper);border:1px dashed var(--line);border-radius:4px;padding:10px 12px;font-size:.92rem;overflow-x:auto;white-space:nowrap}
+.formula small{display:block;color:var(--muted);font-size:.78rem;white-space:normal;direction:rtl;text-align:right;font-family:var(--f-body);margin-top:4px}
+.fig{overflow-x:auto}
+svg{direction:ltr;display:block;max-width:100%;height:auto}
+svg text{font-family:var(--f-body);fill:var(--ink)}
+svg .m{font-family:var(--f-mono)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:4px 12px;cursor:pointer;font-size:.86rem}
+.chip[aria-pressed="true"]{background:var(--machine);border-color:var(--machine);color:var(--panel)}
+.ctl{display:grid;grid-template-columns:minmax(120px,1fr) 2fr auto;gap:10px;align-items:center;font-size:.9rem}
+.ctl output{font-family:var(--f-mono);min-width:7ch;text-align:left;direction:ltr}
+input[type=range]{width:100%;accent-color:var(--machine)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.ro{border:1px solid var(--line);border-radius:4px;padding:8px 10px;background:var(--paper)}
+.ro b{display:block;font-family:var(--f-mono);font-size:1.25rem;direction:ltr;text-align:right}
+.ro span{font-size:.78rem;color:var(--muted)}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700}
+.p-ok{background:var(--machine-soft);color:var(--ok)}
+.p-warn{background:var(--signal-soft);color:var(--signal)}
+.p-bad{background:var(--fail-soft);color:var(--fail)}
+
+/* pyramid */
+.pyr button{cursor:pointer}
+.lvl-detail{min-height:150px}
+
+/* chain of 5 rights */
+.rights{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.right{border:2px solid var(--machine);border-radius:30px;padding:10px 6px;text-align:center;cursor:pointer;background:var(--panel);font-weight:700;font-size:.9rem;position:relative;transition:transform .2s}
+.right:hover{transform:translateY(-2px)}
+.right[aria-pressed="true"]{background:var(--machine);color:var(--panel)}
+.right.broken{border-color:var(--fail);border-style:dashed;color:var(--fail)}
+.right small{display:block;font-family:var(--f-mono);font-weight:400;font-size:.72rem;opacity:.8}
+
+/* case files */
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
+.case{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.case header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.case h4{margin:0;font-size:1rem;font-family:var(--f-display)}
+.case dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.88rem}
+.case dt{color:var(--muted);font-weight:700;white-space:nowrap}
+.case dd{margin:0}
+.case .result{font-size:.86rem;border-top:1px dashed var(--line);padding-top:8px;color:var(--ok);font-weight:500}
+.tag{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--muted);white-space:nowrap}
+
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:start;vertical-align:top}
+th{font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+td.n{font-family:var(--f-mono);direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+
+footer{padding-block:40px;color:var(--muted);font-size:.85rem;border-top:2px solid var(--ink);margin-top:40px}
+
+/* animations */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinr{to{transform:rotate(-360deg)}}
+@keyframes draw{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes travel{0%{transform:translateX(0)}100%{transform:translateX(520px)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 6s linear infinite}
+.spin-slow{transform-box:fill-box;transform-origin:center;animation:spin 14s linear infinite}
+.drawn{stroke-dasharray:1200;animation:draw 3s ease-out both}
+.blink{animation:pulse 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+@media (max-width:820px){
+  .hero-grid,.cols{grid-template-columns:1fr}
+  .rights{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+  .right{font-size:.74rem;padding:8px 2px}
+  .ctl{grid-template-columns:1fr auto}
+  .ctl input{grid-column:1/-1;grid-row:2}
+  .ch-num{font-size:2rem}
+}
+</style>
+</head>
+<body>
+
+
+<div dir="rtl" lang="ar">
+
+<header class="hero">
+ <div class="wrap hero-grid">
+  <div>
+   <div class="tagline"><span class="stamp">FIELD REFERENCE</span><span>ملخص مرجعي لكتاب <span class="en">Practical Root Cause Failure Analysis</span> · <span class="en">Randy Riddell · CRC Press 2022</span></span></div>
+   <h1>تحليل السبب الجذري للأعطال <b>RCFA</b></h1>
+   <p class="lead">الكتاب مكتوب من واقع 32 سنة صيانة واعتمادية في مصانع الورق. الملخص ده بيجمع منهجية النجاح (الـ 5 Rights)، والفيزياء اللي ورا كل عطل، و19 حالة دراسية حقيقية بأرقامها. كل رسمة هنا بتتحرك أو بتتغير مع المدخلات عشان تشوف الفكرة بنفسك.</p>
+   <div class="facts">
+    <span><b>7</b> فصول</span><span><b>19</b> حالة دراسية</span><span><b>5</b> عائلات أعطال</span><span>الإجهاد · الرولمان · الطلمبات · نقل الحركة · المسامير</span>
+   </div>
+  </div>
+  <figure class="hero-fig" style="margin:0">
+   <svg viewBox="0 0 400 260" role="img" aria-label="مقطع عمود دوار عليه شرخ إجهاد يكبر مع الدورات">
+    <defs>
+     <linearGradient id="bend" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--cool)" stop-opacity=".55"/><stop offset=".5" stop-color="var(--panel)" stop-opacity="0"/><stop offset="1" stop-color="var(--fail)" stop-opacity=".55"/>
+     </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="400" height="260" fill="var(--panel)"/>
+    <g id="heroShaft">
+     <circle cx="130" cy="130" r="95" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+     <g id="beach"></g>
+     <path id="ffz" d="" fill="var(--fail)" opacity=".0"/>
+    </g>
+    <rect x="35" y="35" width="190" height="190" fill="url(#bend)" opacity=".7" style="mix-blend-mode:multiply" pointer-events="none" transform="translate(0,0)"/>
+    <text x="130" y="22" text-anchor="middle" font-size="12">ضغط (Compression)</text>
+    <text x="130" y="252" text-anchor="middle" font-size="12">شد (Tension)</text>
+    <g transform="translate(250,40)">
+     <text x="0" y="0" font-size="12" fill="var(--muted)">عدد الدورات N</text>
+     <text id="heroN" class="m" x="0" y="26" font-size="22" font-weight="600">0</text>
+     <text x="0" y="62" font-size="12" fill="var(--muted)">مرحلة الشرخ</text>
+     <text id="heroStage" x="0" y="84" font-size="15" font-weight="700">بداية الشرخ</text>
+     <rect x="0" y="104" width="130" height="10" rx="5" fill="var(--line)"/>
+     <rect id="heroBar" x="0" y="104" width="0" height="10" rx="5" fill="var(--signal)"/>
+     <text x="0" y="140" font-size="11" fill="var(--muted)">علامات التقدم (Beach marks)</text>
+     <text x="0" y="156" font-size="11" fill="var(--muted)">ثم منطقة الكسر السريع (FFZ)</text>
+     <text x="0" y="186" font-size="11" fill="var(--muted)">عمود 1800 rpm تحت انحناء</text>
+     <text x="0" y="202" class="m" font-size="11" fill="var(--muted)">≈ 946,080,000 cycle/yr</text>
+    </g>
+   </svg>
+   <figcaption>عمود بيلف تحت إجهاد انحناء: النص العلوي ضغط والسفلي شد، والشرخ بيكبر في صمت لحد الكسر النهائي.</figcaption>
+  </figure>
+ </div>
+</header>
+
+<nav class="rail" aria-label="فصول الملخص">
+ <div class="wrap rail-in" id="rail">
+  <a href="#ch1"><i>01</i>المقدمة ومستويات العطل</a>
+  <a href="#ch2"><i>02</i>الـ 5 Rights</a>
+  <a href="#ch3"><i>03</i>الإجهاد Fatigue</a>
+  <a href="#ch4"><i>04</i>الرولمان Bearings</a>
+  <a href="#ch5"><i>05</i>الطلمبات Pumps</a>
+  <a href="#ch6"><i>06</i>نقل الحركة</a>
+  <a href="#ch7"><i>07</i>المسامير Bolts</a>
+  <a href="#cases"><i>19</i>كل الحالات</a>
+  <a href="#cheat"><i>Σ</i>ورقة المعادلات</a>
+ </div>
+</nav>
+
+<main class="wrap">
+
+<!-- CH1 -->
+<section class="ch" id="ch1">
+ <div class="ch-head"><span class="ch-num">01</span><div><h2>مقدمة: يعني إيه RCFA ناجح؟</h2>
+ <p>الهدف من RCFA إنك تلاقي الأسباب الجذرية عشان تمنع تكرار العطل، أو على الأقل تقلل احتماله. العطل اللي ما بيتحلش بيتحول لعطل مزمن (Chronic)، والمزمن بيبقى أغلى وأخطر.</p></div></div>
+
+ <div class="cols">
+  <div class="card">
+   <h3>Troubleshooting ≠ RCFA</h3>
+   <table>
+    <tr><th></th><th>Troubleshooting</th><th>RCFA</th></tr>
+    <tr><td><b>الهدف</b></td><td>رجّع الماكينة تشتغل</td><td>امنع العطل يتكرر</td></tr>
+    <tr><td><b>التوقيت</b></td><td>وقت العطل، تحت ضغط</td><td>بعده بأيام أو أسابيع</td></tr>
+    <tr><td><b>المخرج</b></td><td>قطعة اتغيرت</td><td>نظام اتصلح</td></tr>
+   </table>
+   <p class="note key" style="margin-top:12px">مثال الكتاب: Directional valve هيدروليك علِق. الـ Troubleshooting غيّر الفيوز ثم البلف. الـ RCFA لقى تآكل احتكاكي (Abrasive wear) في البلف، وتحليل الزيت متأخر 6 شهور، وفلتر 25µ متركب مكان 10µ عشان التوفير من 3 سنين. الحل: تنظيم برنامج تحليل الزيت، رجوع للفلتر الصح، تدريب، وموافقات أعلى لأي تغيير في قطع المخزن.</p>
+   <p style="margin-top:10px;font-size:.92rem;color:var(--muted)">الـ Troubleshooting هو الأرضية، والـ RCFA الناجح هو السقف لكشف "المصنع الخفي" (Hidden plant) جوه كل موقع.</p>
+  </div>
+
+  <div class="card pyr">
+   <h3>مستويات العطل الأربعة</h3>
+   <p style="font-size:.9rem;color:var(--muted)">دوس على أي مستوى. قصاد كل عطل من المستوى 4 ممكن يكون فيه حوالي 1000 حالة من المستوى 1.</p>
+   <svg viewBox="0 0 420 230" role="img" aria-label="هرم مستويات العطل">
+    <g id="pyramid"></g>
+   </svg>
+   <div class="lvl-detail note" id="lvlDetail" aria-live="polite"></div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>منحنى <span class="mono">D-I-P-F</span>: فين تمنع العطل وفين بس تديره</h3>
+  <p style="font-size:.92rem;color:var(--muted)">D التصميم · I التركيب · P النقطة اللي يبدأ عندها التدهور يبان · F العطل الوظيفي. كل حاجة قبل P اسمها "منع" (Prevent)، وكل حاجة بعدها اسمها "إدارة" (Manage). حرّك المؤشر على الزمن.</p>
+  <div class="fig">
+  <svg viewBox="0 0 900 330" id="pfSvg" role="img" aria-label="منحنى DIPF">
+   <line x1="60" y1="290" x2="880" y2="290" stroke="var(--ink)"/><line x1="60" y1="20" x2="60" y2="290" stroke="var(--ink)"/>
+   <text x="870" y="312" text-anchor="end" font-size="13">الزمن</text>
+   <text x="20" y="160" font-size="13" transform="rotate(-90 20 160)" text-anchor="middle">حالة المعدة</text>
+   <rect x="60" y="20" width="410" height="270" fill="var(--machine-soft)" opacity=".55"/>
+   <rect x="470" y="20" width="410" height="270" fill="var(--fail-soft)" opacity=".6"/>
+   <text x="265" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--machine)">منع العطل (Prevent)</text>
+   <text x="675" y="44" text-anchor="middle" font-size="15" font-weight="700" fill="var(--fail)">إدارة العطل (Manage)</text>
+   <path class="drawn" d="M60 80 L470 80 C 600 82, 700 130, 760 190 S 840 270, 860 285" fill="none" stroke="var(--ink)" stroke-width="3"/>
+   <g font-size="14" font-weight="700">
+    <circle cx="90" cy="80" r="7" fill="var(--machine)"/><text x="90" y="68" text-anchor="middle" class="m">D</text>
+    <circle cx="170" cy="80" r="7" fill="var(--machine)"/><text x="170" y="68" text-anchor="middle" class="m">I</text>
+    <circle cx="470" cy="80" r="8" fill="var(--signal)"/><text x="470" y="66" text-anchor="middle" class="m">P</text>
+    <circle cx="860" cy="285" r="8" fill="var(--fail)"/><text x="846" y="272" text-anchor="end" class="m">F</text>
+   </g>
+   <text x="620" y="120" font-size="12" fill="var(--muted)">المستوى 1 و 2</text>
+   <text x="720" y="185" font-size="12" fill="var(--muted)">المستوى 3</text>
+   <text x="800" y="240" font-size="12" fill="var(--muted)">المستوى 4</text>
+   <line id="pfCursor" x1="300" y1="20" x2="300" y2="290" stroke="var(--signal)" stroke-width="2" stroke-dasharray="5 4"/>
+  </svg>
+  </div>
+  <div class="ctl" style="margin-top:8px"><label for="pfT">مكانك على عمر الأصل</label><input type="range" id="pfT" min="70" max="870" value="300"><output id="pfOut"></output></div>
+  <div class="note" id="pfInfo" style="margin-top:10px" aria-live="polite"></div>
+ </div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>الاعتمادية مسؤولية الكل</h3>
+   <div class="formula">Total Reliability = Σ Engineering + Construction + Operations + Maintenance + Purchasing + Reliability + Safety + Environmental + Senior Management</div>
+   <ul class="clean" style="font-size:.93rem">
+    <li>تقديرات بتقول إن <b>50–75%</b> من مشاكل الاعتمادية ليها علاقة بالتصميم.</li>
+    <li>المشتريات: ممنوع بديل خارج المواصفة. السعر بيتدفع مرة واحدة، والقيمة بتبان على المدى الطويل.</li>
+    <li>قرار إداري من 10 سنين ممكن يكون هو سبب عطل النهارده.</li>
+   </ul>
+  </div>
+  <div class="card">
+   <h3>كام في المية من وقت الصيانة لازم يروح للتحسين؟</h3>
+   <svg viewBox="0 0 420 90" role="img" aria-label="توزيع عبء الصيانة حسب SMRP">
+    <rect x="10" y="20" width="40" height="34" fill="var(--signal)"/>
+    <rect x="50" y="20" width="320" height="34" fill="var(--machine)"/>
+    <rect x="370" y="20" width="40" height="34" fill="var(--fail)"/>
+    <text x="30" y="42" text-anchor="middle" font-size="12" class="m" fill="var(--panel)">10%</text>
+    <text x="210" y="42" text-anchor="middle" font-size="13" fill="var(--panel)">80% أعمال متكررة (PM + Corrective)</text>
+    <text x="390" y="42" text-anchor="middle" font-size="12" class="m" fill="var(--panel)">10%</text>
+    <text x="30" y="76" text-anchor="middle" font-size="11">تحسين/RCFA</text>
+    <text x="390" y="76" text-anchor="middle" font-size="11">طوارئ</text>
+   </svg>
+   <p style="font-size:.93rem">ده معيار <span class="en">SMRP</span>. لو المصنع غرقان في أعطال المستوى 4 لازم نسبة الـ RCFA تزيد، لأنها المحرك اللي بينقلك من Reactive لـ Proactive.</p>
+  </div>
+ </div>
+</section>
+
+<!-- CH2 -->
+<section class="ch" id="ch2">
+ <div class="ch-head"><span class="ch-num">02</span><div><h2>الـ 5 Rights لنجاح الـ RCFA</h2>
+ <p>الـ RCFA عملية على التوالي (Series process) زي السلسلة: لو أي حلقة اتكسرت، النتيجة النهائية غلط. وكل ما الغلطة تحصل بدري، كل ما البعد عن الحقيقة يزيد. دوس على أي حلقة تشوف تفاصيلها، ودوس عليها مرتين تكسرها.</p></div></div>
+
+ <div class="rights" id="rights">
+  <button class="right" data-r="0" aria-pressed="true">النظام<small>Right System</small></button>
+  <button class="right" data-r="1" aria-pressed="false">الموارد<small>Right Resources</small></button>
+  <button class="right" data-r="2" aria-pressed="false">الدليل<small>Right Evidence</small></button>
+  <button class="right" data-r="3" aria-pressed="false">التحليل<small>Right Analysis</small></button>
+  <button class="right" data-r="4" aria-pressed="false">الإجراءات<small>Right Actions</small></button>
+ </div>
+ <div class="note" id="chainStatus" style="margin-top:10px" aria-live="polite"></div>
+ <div class="card" id="rightDetail" style="margin-top:14px" aria-live="polite"></div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>الـ 5 Whys مقابل شجرة الاحتمالات</h3>
+   <p style="font-size:.9rem;color:var(--muted)">مثال الكتاب: خلط ضعيف في تانك. الـ 5 Whys خطّي وبيوقف عند أول إجابة مقنعة. شجرة Failure-mode بتفتح كل الفروع الممكنة.</p>
+   <div class="row" style="margin-block:8px"><button class="chip" id="btnWhy" aria-pressed="true">5 Whys</button><button class="chip" id="btnTree" aria-pressed="false">Logic Tree</button></div>
+   <div class="fig"><svg viewBox="0 0 520 300" id="whySvg" role="img" aria-label="مقارنة بين 5 Whys وشجرة الأسباب"></svg></div>
+  </div>
+  <div class="card">
+   <h3>العطل الأساسي ولا الثانوي؟</h3>
+   <p style="font-size:.9rem;color:var(--muted)">في الأعطال الكارثية اسأل نفسك: هل العطل A ممكن يعمل العطل B؟ مثال الكتاب: سير ناقل (Apron conveyor) اتقطع. اختار العطل اللي تفتكر إنه الأساسي.</p>
+   <div class="stack" id="psQuiz" style="margin-top:10px">
+    <button class="chip" data-a="A" style="text-align:start;border-radius:6px">A · حلقة الجنزير متآكلة والخرم مقطوع</button>
+    <button class="chip" data-a="B" style="text-align:start;border-radius:6px">B · رولمان عجلة الجنزير انهار</button>
+    <button class="chip" data-a="C" style="text-align:start;border-radius:6px">C · لوح (Slat) الناقل متني</button>
+    <button class="chip" data-a="D" style="text-align:start;border-radius:6px">D · حلقات جانبية متنية</button>
+   </div>
+   <div class="note" id="psOut" style="margin-top:10px" aria-live="polite">C و D واضح إنهم نتيجة لما جنب واحد من الجنزير اتفك. فاضل A و B.</div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>أنماط الأعطال الستة (RCM)</h3>
+  <p style="font-size:.9rem;color:var(--muted)">الـ PM المبني على الوقت بيفيد بس مع الأنماط المرتبطة بالعمر (11%). أما 89% من الأعطال عشوائية. وفيات البدايات (Infant mortality) لوحدها 68%، يعني أخطر وقت في عمر المعدة هو بعد التشغيل أو الصيانة على طول.</p>
+  <div class="fig"><svg viewBox="0 0 960 200" id="patterns" role="img" aria-label="أنماط الأعطال الستة"></svg></div>
+  <div class="row" style="font-size:.85rem;color:var(--muted);margin-top:6px">
+   <span>العمر الكامل المتوقع: سير V-belt حوالي 3 سنين · رولمان كروي على زيت 25–40 سنة · مانع تسرب شفة (Lip seal) من 6 لـ 12 شهر · Labyrinth حوالي 50 سنة</span>
+  </div>
+ </div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>نموذج الجبنة السويسري</h3>
+   <p style="font-size:.9rem;color:var(--muted)">طلمبة اتغير لها Rotating assembly واشتغلت من غير زيت. العطل حصل لأن الخروم في كل طبقة حماية جت على خط واحد.</p>
+   <div class="fig"><svg viewBox="0 0 560 230" id="swiss" role="img" aria-label="نموذج الجبنة السويسرية"></svg></div>
+   <div class="row"><button class="chip" id="swissBtn" aria-pressed="false">رتّب الخروم</button><span style="font-size:.85rem;color:var(--muted)">كل طبقة ممكن تبقى Action item.</span></div>
+  </div>
+  <div class="card stack">
+   <h3>إجراءات تصحيحية صح</h3>
+   <ul class="clean" style="font-size:.93rem">
+    <li><b>Physical</b>: القطعة نفسها، ودي عادة بتتعمل.</li>
+    <li><b>Human</b>: <span style="color:var(--fail);font-weight:700">ممنوع العقاب.</span> أسرع طريقة تموّت ثقافة RCFA. صلّح الإجراء، أو صمّم الخطأ البشري بره الماكينة.</li>
+    <li><b>Latent</b>: أنظمة المؤسسة (تدريب، مواصفات، MOC). وقّف عند "مستوى التحكم الممكن".</li>
+    <li>قسّمها: قصيرة المدى، وطويلة المدى (مشروع أو Capex)، واستقصائية.</li>
+    <li><b>اقفل الدايرة</b>: بعد التنفيذ اتأكد إن العطل ما رجعش (مثلاً قيس الرنين تاني).</li>
+   </ul>
+   <div class="note warn"><b>احذر الـ PM Creep:</b> إضافة PM بعد كل عطل من غير ما تحدد هو بيدور على إيه. دراسات بتقول إن 40–50% من الـ PM مالوش قيمة.
+    <ul class="clean"><li>تكرار الـ PM = <b>نص فترة P-F</b> لنمط العطل.</li><li>لو الـ PM ما لقاش مشكلة في 5–6 مرات، يبقى فيه حاجة غلط.</li><li>حوالي 15% من الشغل المفروض يطلع من الـ PM.</li><li>عطل الإجهاد (Fatigue) ما ينفعش يتعالج بـ PM.</li></ul></div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>فيزياء العطل (Physics of Failure): مثال كبلنج زحف على العمود</h3>
+  <div class="cols">
+   <div class="formula">T = E · i · t · l · f · π<small>عزم الاحتكاك اللي التداخل يقدر ينقله: E معامل المرونة، i التداخل، t سُمك الـ Hub، l طوله، f معامل الاحتكاك</small></div>
+   <p style="font-size:.93rem">كل متغير في المعادلة هو سبب محتمل: تداخل قليل (تشغيل غلط)، Hub رقيق أو قصير (تصميم)، احتكاك قليل (شحم أو مانع تآكل على السطح). "مش هتقدر تغش الفيزياء."</p>
+  </div>
+ </div>
+</section>
+
+<!-- CH3 -->
+<section class="ch" id="ch3">
+ <div class="ch-head"><span class="ch-num">03</span><div><h2>الإجهاد المتكرر (Fatigue)</h2>
+ <p>إجهاد متكرر أقل من حد الخضوع (Yield)، بيتكرر ملايين المرات، والشرخ مستخبي لحد الكسر. وصفة الإجهاد ليها مكونين: <b>إجهاد دوري</b> و<b>حالة المادة</b> اللي بتنزّل حد التحمل. من غير إجهاد دوري مفيش Fatigue.</p></div></div>
+
+ <div class="card">
+  <h3>منحنى S-N التفاعلي: عمر لا نهائي ولا محدود؟</h3>
+  <p style="font-size:.9rem;color:var(--muted)">غيّر معاملات تقليل حد التحمل والإجهاد الدوري، وشوف القطعة هتعيش قد إيه. القيم الافتراضية من حالة جنزير الـ Precipitator.</p>
+  <div class="cols" style="margin-top:10px">
+   <div class="stack">
+    <div class="ctl"><label for="sut">مقاومة الشد Sut (ksi)</label><input type="range" id="sut" min="60" max="180" value="85"><output id="sutO"></output></div>
+    <div class="ctl"><label for="ka">Ka سطح التشطيب</label><input type="range" id="ka" min="0.4" max="1" step="0.01" value="0.62"><output id="kaO"></output></div>
+    <div class="ctl"><label for="kb">Kb الحجم</label><input type="range" id="kb" min="0.6" max="1" step="0.01" value="0.8"><output id="kbO"></output></div>
+    <div class="ctl"><label for="ke">Ke تركيز إجهادات/تآكل</label><input type="range" id="ke" min="0.4" max="1" step="0.01" value="0.62"><output id="keO"></output></div>
+    <div class="ctl"><label for="sa">الإجهاد الدوري σa (ksi)</label><input type="range" id="sa" min="5" max="70" value="47"><output id="saO"></output></div>
+    <div class="readout">
+     <div class="ro"><span>Se′ = 0.504·Sut</span><b id="se1">–</b></div>
+     <div class="ro"><span>Se للقطعة</span><b id="se2">–</b></div>
+     <div class="ro"><span>العمر المتوقع N</span><b id="nOut">–</b></div>
+    </div>
+    <div id="lifeVerdict"></div>
+   </div>
+   <div class="fig"><svg viewBox="0 0 460 300" id="snSvg" role="img" aria-label="منحنى S-N"></svg></div>
+  </div>
+  <div class="formula" style="margin-top:12px">Se = Se′·Ka·Kb·Kc·Kd·Ke     Sf = a·N^b     a = (0.9 Sut)² / Se     b = −⅓·log(0.9 Sut / Se)     N = (σa / a)^(1/b)
+   <small>Kc: انحناء 1.0 · محوري 0.923 · لي 0.577 — Kd: 0.995 عند 500°F و 0.698 عند 1000°F — Ka: من 1 (مصقول) لـ 0.4 (مطروق/خشن)؛ 250Ra≈0.75 و 32Ra≈0.95</small></div>
+ </div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>اقرأ سطح الكسر</h3>
+   <svg viewBox="0 0 470 220" role="img" aria-label="سطح كسر إجهاد">
+    <circle cx="140" cy="110" r="95" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+    <g fill="none" stroke="var(--muted)" stroke-width="1.4">
+     <path d="M60 60 A 30 30 0 0 1 90 40"/><path d="M58 85 A 55 55 0 0 1 112 32"/><path d="M60 115 A 80 80 0 0 1 140 28"/><path d="M68 145 A 105 105 0 0 1 170 32"/><path d="M85 170 A 130 130 0 0 1 200 45"/>
+    </g>
+    <path d="M110 200 Q 200 190 230 120 Q 236 170 175 200 Z" fill="var(--fail)" opacity=".35"/>
+    <circle cx="62" cy="48" r="6" fill="var(--signal)" class="blink"/>
+    <g font-size="12">
+     <line x1="62" y1="48" x2="260" y2="30" stroke="var(--signal)"/><text x="265" y="34">بداية الشرخ (Initiation)</text>
+     <line x1="120" y1="80" x2="260" y2="80" stroke="var(--muted)"/><text x="265" y="84">علامات التقدم (Beach marks)</text>
+     <line x1="200" y1="175" x2="260" y2="150" stroke="var(--fail)"/><text x="265" y="154">منطقة الكسر السريع (FFZ)</text>
+    </g>
+    <text x="265" y="190" font-size="11" fill="var(--muted)">FFZ صغيرة = إجهاد اسمي قليل</text>
+    <text x="265" y="206" font-size="11" fill="var(--muted)">FFZ كبيرة = حمل اسمي عالي</text>
+   </svg>
+   <p style="font-size:.9rem">الإجهاد نوعين: Low cycle (أقل من 10³ دورة) وHigh cycle (أكتر من 10⁷). أكبر معاملين بيقللوا حد التحمل في الواقع هما <b>سطح التشطيب Ka</b> و<b>تركيز الإجهادات Ke</b>، زي Radius حاد أو آثار عدة أو مجرى خابور.</p>
+  </div>
+  <div class="card">
+   <h3>دروس التاريخ</h3>
+   <ul class="clean" style="font-size:.93rem">
+    <li><b>1837</b> · Wilhelm Albert: جنازير المناجم بتتقطع تحت أحمال صغيرة متكررة.</li>
+    <li><b>القرن 19</b> · August Wöhler ومحاور القطارات، ومن هنا جه منحنى S-N.</li>
+    <li><b>لحد 1952</b> · 1289 سفينة حربية حصل فيها إجهاد.</li>
+    <li><b>1954</b> · طيارة Comet: الشرخ بدأ من ركن شباك مربع، وعشان كده الشبابيك النهارده مدورة. ومن هنا بدأ عامل تركيز الإجهاد Kt لـ Peterson.</li>
+    <li><b>1940</b> · كوبري Tacoma Narrows: الرنين مش مصدر اهتزاز، الرنين بيكبّره.</li>
+   </ul>
+  </div>
+ </div>
+
+ <h3 style="margin-top:28px">حالات الفصل</h3>
+ <div class="cases" data-ch="3"></div>
+</section>
+
+<!-- CH4 -->
+<section class="ch" id="ch4">
+ <div class="ch-head"><span class="ch-num">04</span><div><h2>أعطال الرولمان (Antifriction Bearings)</h2>
+ <p>"الرولمان ما بيموتش، الرولمان بيتقتل." المتغيرات الكبيرة تلاتة: <b>الحمل</b>، <b>التزييت</b> (أكتر من 50% من الأعطال)، و<b>التركيب</b>. وأهم خاصية في التزييت هي اللزوجة.</p></div></div>
+
+ <div class="cols">
+  <div class="card">
+   <h3>حاسبة عمر L10</h3>
+   <div class="formula">L10 (hr) = a1·a2·a3 · (16,667 / n) · (C / P)^p<small>p = 3 للبلي · 10/3 للرولرز · L10 يعني 90% من الرولمانات توصل للعمر ده</small></div>
+   <div class="stack" style="margin-top:10px">
+    <div class="ctl"><label for="bC">C حمل ديناميكي (lbf)</label><input type="range" id="bC" min="5000" max="60000" step="500" value="27900"><output id="bCO"></output></div>
+    <div class="ctl"><label for="bP">P حمل مكافئ (lbf)</label><input type="range" id="bP" min="500" max="20000" step="100" value="3000"><output id="bPO"></output></div>
+    <div class="ctl"><label for="bN">n السرعة (rpm)</label><input type="range" id="bN" min="100" max="3600" step="10" value="1800"><output id="bNO"></output></div>
+    <div class="ctl"><label for="bA3">a3 معامل التزييت</label><input type="range" id="bA3" min="0.1" max="2" step="0.05" value="1"><output id="bA3O"></output></div>
+    <div class="row"><button class="chip" id="bBall" aria-pressed="true">بلي (p=3)</button><button class="chip" id="bRoll" aria-pressed="false">رولرز (p=10/3)</button><button class="chip" id="bDouble" aria-pressed="false">ضاعف الحمل</button></div>
+    <div class="readout"><div class="ro"><span>L10 ساعات</span><b id="l10h">–</b></div><div class="ro"><span>سنين تشغيل 24/7</span><b id="l10y">–</b></div></div>
+    <p style="font-size:.88rem;color:var(--muted)">لو ضاعفت الحمل على رولمان بلي العمر بيقل حوالي 8 مرات (2³)، وعلى رولرز حوالي 10 مرات. عشان كده شد السيور الزايد بيقتل الرولمان.</p>
+   </div>
+  </div>
+  <div class="card">
+   <h3>منطقة الحمل (Load zone)</h3>
+   <p style="font-size:.9rem;color:var(--muted)">التركيب السليم بيدي منطقة حمل حوالي 120° تحت. لو التركيب زايد (Overmounted) وشال الخلوص الداخلي RIC، أو لو فيه Preload حراري، المنطقة بتبقى 360° على الحلقة الخارجية.</p>
+   <svg viewBox="0 0 320 320" id="brgSvg" role="img" aria-label="رولمان بلي ومنطقة الحمل">
+    <circle cx="160" cy="160" r="140" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>
+    <path id="loadZone" d="" fill="var(--fail)" opacity=".28"/>
+    <circle cx="160" cy="160" r="118" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5"/>
+    <circle cx="160" cy="160" r="82" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+    <g class="spin-slow" id="balls"></g>
+    <circle cx="160" cy="160" r="60" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="3"/>
+    <g class="spin"><rect x="155" y="104" width="10" height="16" fill="var(--ink)"/></g>
+    <path d="M160 300 L160 330" stroke="var(--fail)" stroke-width="0"/>
+    <text x="160" y="166" text-anchor="middle" font-size="13" class="m">shaft</text>
+    <text id="lzLabel" x="160" y="312" text-anchor="middle" font-size="13" font-weight="700">≈120°</text>
+   </svg>
+   <div class="row"><button class="chip" id="lzOk" aria-pressed="true">تركيب سليم</button><button class="chip" id="lzBad" aria-pressed="false">Overmounted أو Preload</button></div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>طرق التركيب: كل طريقة ليها حدودها</h3>
+  <div class="tbl"><table>
+   <tr><th>الطريقة</th><th>إمتى</th><th>تحذير الكتاب</th></tr>
+   <tr><td>Cold mounting</td><td>الأقطار الصغيرة: لحد 70mm للتجويف الأسطواني و240mm للمخروطي</td><td>بأدوات وجُلَب (Sleeves) مخصوصة</td></tr>
+   <tr><td>Temperature (Induction / حمام زيت)</td><td>التجويف الأسطواني</td><td>ما تزوّدش التسخين، وامسح المغناطيسية المتبقية</td></tr>
+   <tr><td>Hydraulic nut</td><td>المخروطي على Journal مخروطي</td><td>الـ RIC النهائي بيتحدد بمسافة الدفع</td></tr>
+   <tr><td>Angular drive-up</td><td>Self-aligning ball bearing</td><td>مفيش طريقة تقيس بيها RIC، فلازم جداول المصنّع</td></tr>
+   <tr><td>Feeler gauge / Axial drive-up</td><td>الكروي على Taper</td><td>استخدم كارت الخلوص بتاع المصنّع، مفيش رقم موحّد</td></tr>
+  </table></div>
+  <p class="note" style="margin-top:10px">الحد الأدنى للحمل حوالي 2–3% من C. الحمل القليل جداً بيعمل انزلاق (Skidding). والرولمان الأسطواني بيشيل أحمال قطرية بس.</p>
+ </div>
+
+ <h3 style="margin-top:28px">حالات الفصل</h3>
+ <div class="cases" data-ch="4"></div>
+</section>
+
+<!-- CH5 -->
+<section class="ch" id="ch5">
+ <div class="ch-head"><span class="ch-num">05</span><div><h2>أعطال منظومة الطلمبات</h2>
+ <p>معظم أعطال الطلمبة الميكانيكية ليها جذر هيدروليكي (المنظومة). أي تحليل لعطل طلمبة من غير ما تحدد نقطة التشغيل (Operating point) يبقى تحليل ناقص.</p></div></div>
+
+ <div class="cols">
+  <div class="card">
+   <h3>نقطة التشغيل: POR وAOR وBEP</h3>
+   <p style="font-size:.9rem;color:var(--muted)">حرّك التصرف وشوف إيه اللي بيحصل للطلمبة. القيم من طلمبة الـ Stock dilution: BEP عند 4400gpm، و POR من −30% لـ +20% (للطلمبات منخفضة السرعة النوعية).</p>
+   <div class="fig"><svg viewBox="0 0 480 300" id="pumpSvg" role="img" aria-label="منحنى الطلمبة ومناطق التشغيل"></svg></div>
+   <div class="ctl"><label for="qIn">التصرف Q (gpm)</label><input type="range" id="qIn" min="300" max="6600" step="50" value="1500"><output id="qOut"></output></div>
+   <div id="pumpVerdict" class="note" style="margin-top:8px" aria-live="polite"></div>
+  </div>
+  <div class="card">
+   <h3>حاسبة NPSH مع هامش الأمان</h3>
+   <div class="formula">NPSHA = P1 + Hs − Hvp − Hf     NPSHR(eff) = NPSH3 × Margin<small>NPSH3 في الكتالوج هي النقطة اللي فيها الـ Head بيقل 3% بسبب التكهف، يعني التكهف حاصل فعلاً عندها</small></div>
+   <div class="stack" style="margin-top:10px">
+    <div class="ctl"><label for="p1">P1 ضغط السطح (ft)</label><input type="range" id="p1" min="20" max="60" step="0.1" value="33.9"><output id="p1O"></output></div>
+    <div class="ctl"><label for="hs">Hs منسوب التانك (ft)</label><input type="range" id="hs" min="-10" max="30" step="0.5" value="10"><output id="hsO"></output></div>
+    <div class="ctl"><label for="hvp">Hvp ضغط البخار (ft)</label><input type="range" id="hvp" min="0.5" max="30" step="0.1" value="3.9"><output id="hvpO"></output></div>
+    <div class="ctl"><label for="hf">Hf فواقد الاحتكاك (ft)</label><input type="range" id="hf" min="0" max="20" step="0.1" value="1.9"><output id="hfO"></output></div>
+    <div class="ctl"><label for="n3">NPSH3 من المنحنى (ft)</label><input type="range" id="n3" min="5" max="50" step="0.5" value="21"><output id="n3O"></output></div>
+    <div class="ctl"><label for="mg">هامش NPSH</label><input type="range" id="mg" min="1" max="2.5" step="0.1" value="2.5"><output id="mgO"></output></div>
+    <div class="readout"><div class="ro"><span>NPSHA</span><b id="naO">–</b></div><div class="ro"><span>NPSHR فعلي</span><b id="nrO">–</b></div></div>
+    <div id="npshVerdict"></div>
+    <p style="font-size:.86rem;color:var(--muted)">الهامش بيتحدد من Suction Energy (طبقاً لـ ANSI/HI 9.6.1): فوق 240×10⁶ يبقى "عالية جداً" والهامش 2.5. الـ SE بتتناسب مع مربع السرعة، فالسرعة عامل كبير.</p>
+   </div>
+  </div>
+ </div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>مين بيعطل في الطلمبة؟</h3>
+   <p style="font-size:.88rem;color:var(--muted)">دراسة في مصنع ورق</p>
+   <svg viewBox="0 0 420 190" id="pumpBars" role="img" aria-label="توزيع أعطال مكونات الطلمبة"></svg>
+  </div>
+  <div class="card">
+   <h3>تأثير البُعد عن الـ BEP</h3>
+   <ul class="clean" style="font-size:.93rem">
+    <li><b>يمين الـ BEP:</b> الـ NPSHR بيعلى، وبيحصل تكهف ورعشة وانحراف في العمود.</li>
+    <li><b>شمال الـ BEP:</b> تكهف إعادة دوران (Recirculation) وأحمال قطرية، والسيل بيفتح.</li>
+    <li><b>شمال جداً:</b> حرارة السائل بتعلى والكفاءة بتنهار، لحد الـ Dead head.</li>
+    <li>نسبة صلابة العمود <span class="mono">L³/D⁴</span> بتبين قد إيه العمود هيتحني.</li>
+    <li>الـ Control valves لازم تشتغل بين 40% و60% فتح. لو كلها تحت 30% يبقى الطلمبة أكبر من اللازم أو الـ Setpoint عالي.</li>
+   </ul>
+   <div class="formula" style="margin-top:8px">BHP = 1.732·I·V·pf·η / 746     Q = BHP·η·3960 / (H·SG)<small>تقدر تحدد نقطة التشغيل من تيار الموتور من غير فلوميتر</small></div>
+  </div>
+ </div>
+
+ <h3 style="margin-top:28px">حالات الفصل</h3>
+ <div class="cases" data-ch="5"></div>
+</section>
+
+<!-- CH6 -->
+<section class="ch" id="ch6">
+ <div class="ch-head"><span class="ch-num">06</span><div><h2>أعطال نقل الحركة الميكانيكية</h2>
+ <p>السيور (V-belt بالاحتكاك، Synchronous بالأسنان) والجيربوكسات. الشد الصح هو أقل شد يحرّك الحمل من غير زحلقة. والطارة الصغيرة اللي على الموتور هي اللي بتتآكل أسرع.</p></div></div>
+
+ <div class="cols">
+  <div class="card">
+   <h3>طارة متآكلة = سرعة أقل = قدرة أقل بالتكعيب</h3>
+   <svg viewBox="0 0 460 210" role="img" aria-label="منظومة سير بين طارتين">
+    <g>
+     <circle cx="90" cy="105" r="40" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+     <circle cx="350" cy="105" r="85" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+     <path d="M90 65 L350 20 M90 145 L350 190" stroke="var(--ink)" stroke-width="5" stroke-dasharray="14 8" id="beltLines">
+      <animate attributeName="stroke-dashoffset" from="0" to="-44" dur="1s" repeatCount="indefinite"/>
+     </path>
+     <g class="spin"><line x1="90" y1="105" x2="90" y2="72" stroke="var(--ink)" stroke-width="3"/><circle cx="90" cy="105" r="6" fill="var(--ink)"/></g>
+     <g class="spin-slow"><line x1="350" y1="105" x2="350" y2="30" stroke="var(--ink)" stroke-width="3"/><circle cx="350" cy="105" r="8" fill="var(--ink)"/></g>
+     <text x="90" y="170" text-anchor="middle" font-size="12">طارة الموتور</text>
+     <text x="350" y="206" text-anchor="middle" font-size="12">الطارة المدارة</text>
+    </g>
+   </svg>
+   <div class="ctl"><label for="bT">حرارة السير (°F)</label><input type="range" id="bT" min="100" max="240" value="220"><output id="bTO"></output></div>
+   <div class="readout"><div class="ro"><span>العمر مقارنة بـ 140°F</span><b id="beltLife">–</b></div><div class="ro"><span>الحالة</span><b id="beltState" style="font-family:var(--f-body);font-size:1rem">–</b></div></div>
+   <p style="font-size:.88rem;color:var(--muted);margin-top:8px">قاعدة Arrhenius: كل زيادة 18°F (8°C) العمر بيقل للنص. حالة الـ Agitator: السير كان 220°F ونزل لـ 127°F بعد الإصلاح.</p>
+  </div>
+  <div class="card stack">
+   <h3>قواعد السيور والطارات</h3>
+   <ul class="clean" style="font-size:.93rem">
+    <li>أقصى سرعة سطح للطارة: زهر 6,500fpm · زهر مرن 8,000 · صلب 10,000.</li>
+    <li>غيّر الطارة لما التآكل يوصل <span class="mono">1/32"</span>. الـ Powerband على طارة متآكلة بيقطع الحزام الخارجي.</li>
+    <li>الـ Powerband مش أقوى من سيور V منفصلة. الـ Notched أعلى شوية في الطارات الصغيرة.</li>
+    <li>التصويب القديم كان 1/32" لكل قدم، لكن بالليزر النهارده تقدر توصل لأدق من كده بكتير.</li>
+    <li><b>ممنوع</b> أي مانع تآكل (Anti-seize) أو شحم على السطح المخروطي لجلبة TL/QD، وممنوع الـ Impact wrench، لأنه بيكسر الطارة.</li>
+    <li>ما تحطش Belt dressing عشان تسكت صوت السير. دوّر على السبب: تصويب، شد، أو تآكل.</li>
+    <li>استخدم سيور من نفس المصنّع عشان الأطوال تكون متقاربة.</li>
+   </ul>
+   <div class="formula">P2 = P1·(N2/N1)³     T = WK²·ΔN / (307.2·Δt)<small>قانون التشابه (Affinity law) · عزم القصور الذاتي أثناء التسارع والتباطؤ</small></div>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>الجيربوكسات: اللزوجة على اللوحة</h3>
+  <div class="cols">
+   <div>
+    <svg viewBox="0 0 440 150" id="agma" role="img" aria-label="تحويل AGMA إلى ISO VG"></svg>
+    <p style="font-size:.88rem;color:var(--muted)">AGMA 5 = ISO 220، وكل رقم بيطلع درجة ISO واحدة. الـ Worm gear غالباً AGMA 7 (460). ويُفضَّل إضافات EP.</p>
+   </div>
+   <ul class="clean" style="font-size:.93rem">
+    <li>التزييت إما Splash (منسوب الزيت حرج، وتقيسه والجيربوكس واقف) أو Pressure (بطلمبة، وتقدر تفلتر).</li>
+    <li>هدف النظافة حوالي <span class="mono">ISO 17/15/12</span>. والـ Breather لازم يكون بنفس ميكرون الفلتر.</li>
+    <li>الـ Thermal HP أقل من الـ Mechanical HP. والحد عند AGMA إن حرارة الحوض ما تعديش 200°F (93°C).</li>
+    <li>أشكال العطل: Pitting/Spalling على خط الخطوة · Scuffing/Scoring/Abrasion · Plastic flow (حمل زايد، مش تزييت) · كسر سن.</li>
+   </ul>
+  </div>
+ </div>
+
+ <h3 style="margin-top:28px">حالات الفصل</h3>
+ <div class="cases" data-ch="6"></div>
+</section>
+
+<!-- CH7 -->
+<section class="ch" id="ch7">
+ <div class="ch-head"><span class="ch-num">07</span><div><h2>أعطال الوصلات المربوطة بمسامير</h2>
+ <p>الهدف مش العزم، الهدف هو <b>الشد المسبق (Preload)</b> اللي بيعمل قوة ضغط على الوصلة. الوصلة المضغوط عليها كويس بتمتص الحمل الخارجي، والمسمار بيشوف جزء صغير بس من الحمل الدوري.</p></div></div>
+
+ <div class="cols">
+  <div class="card">
+   <h3>Joint diagram: الـ Preload بيقتل الإجهاد</h3>
+   <div class="formula">Fb = C·P + Fi     T = K·D·F<small>K = 0.15 مزيّت · 0.2 ناشف. حوالي 10–20% بس من العزم بيتحول لشد، و~40% احتكاك سنون، و40–50% احتكاك تحت الراس</small></div>
+   <div class="stack" style="margin-top:10px">
+    <div class="ctl"><label for="fi">Preload كنسبة من الهدف</label><input type="range" id="fi" min="10" max="110" value="50"><output id="fiO"></output></div>
+    <div class="ctl"><label for="pext">الحمل الخارجي الدوري P</label><input type="range" id="pext" min="10" max="100" value="60"><output id="pextO"></output></div>
+   </div>
+   <div class="fig"><svg viewBox="0 0 460 210" id="jointSvg" role="img" aria-label="الحمل الدوري على المسمار"></svg></div>
+   <div id="jointVerdict" aria-live="polite"></div>
+  </div>
+  <div class="card">
+   <h3>دائرة مسامير دوّارة (Dryer journal)</h3>
+   <p style="font-size:.9rem;color:var(--muted)">وهي بتلف، كل مسمار بيعدّي على الشد (الساعة 6) والضغط (الساعة 12) في كل لفة. لو نص الدائرة الـ Preload بتاعه نص الباقي، الإجهاد ينهار عليه زي السوستة.</p>
+   <svg viewBox="0 0 320 300" role="img" aria-label="دائرة مسامير دوارة">
+    <circle cx="160" cy="150" r="125" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>
+    <circle cx="160" cy="150" r="60" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+    <g id="boltRing"></g>
+    <text x="160" y="16" text-anchor="middle" font-size="12" fill="var(--cool)" font-weight="700">ضغط</text>
+    <text x="160" y="294" text-anchor="middle" font-size="12" fill="var(--fail)" font-weight="700">شد</text>
+    <text x="160" y="155" text-anchor="middle" font-size="12" class="m">journal</text>
+   </svg>
+   <div class="row"><button class="chip" id="scatterBtn" aria-pressed="true">Preload متشتت (as-found)</button><button class="chip" id="uniformBtn" aria-pressed="false">Ultrasonic elongation</button></div>
+   <div class="readout" style="margin-top:8px"><div class="ro"><span>متوسط الـ Preload</span><b id="bAvg">28,415 lbf</b></div><div class="ro"><span>الانحراف المعياري</span><b id="bSd">4,346 lbf</b></div></div>
+  </div>
+ </div>
+
+ <div class="cols" style="margin-top:20px">
+  <div class="card">
+   <h3>دقة طرق الربط</h3>
+   <svg viewBox="0 0 420 200" id="torqueAcc" role="img" aria-label="دقة طرق الربط"></svg>
+  </div>
+  <div class="card">
+   <h3>المسمار بيتكسر فين؟</h3>
+   <svg viewBox="0 0 420 200" role="img" aria-label="أماكن كسر المسامير">
+    <rect x="40" y="70" width="40" height="60" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+    <rect x="80" y="85" width="270" height="30" fill="var(--machine-soft)" stroke="var(--ink)" stroke-width="2"/>
+    <g stroke="var(--ink)" stroke-width="1">
+     <path d="M190 85 l0 30 M200 85 l0 30 M210 85 l0 30 M220 85 l0 30 M230 85 l0 30 M240 85 l0 30 M250 85 l0 30 M260 85 l0 30 M270 85 l0 30 M280 85 l0 30 M290 85 l0 30 M300 85 l0 30 M310 85 l0 30 M320 85 l0 30 M330 85 l0 30 M340 85 l0 30"/>
+    </g>
+    <rect x="270" y="60" width="50" height="80" fill="var(--signal-soft)" stroke="var(--ink)" stroke-width="2" opacity=".8"/>
+    <text x="295" y="155" text-anchor="middle" font-size="11">صامولة</text>
+    <circle cx="82" cy="100" r="9" fill="var(--signal)" class="blink"/><text x="82" y="50" text-anchor="middle" font-size="13" font-weight="700" class="m">15%</text><text x="82" y="34" text-anchor="middle" font-size="11">تحت الراس</text>
+    <circle cx="190" cy="100" r="9" fill="var(--signal)" class="blink"/><text x="190" y="50" text-anchor="middle" font-size="13" font-weight="700" class="m">20%</text><text x="190" y="34" text-anchor="middle" font-size="11">نهاية السن</text>
+    <circle cx="272" cy="100" r="12" fill="var(--fail)" class="blink"/><text x="272" y="186" text-anchor="middle" font-size="13" font-weight="700" class="m" fill="var(--fail)">65%</text><text x="350" y="186" text-anchor="middle" font-size="11">أول سنة داخلة في الصامولة</text>
+   </svg>
+   <ul class="clean" style="font-size:.9rem">
+    <li>حوالي 85% من أعطال المسامير إجهاد (Fatigue)، و80% من الحمل بتشيله أول 3 سنون.</li>
+    <li>ميل الراس أكتر من 1° بيقلل مقاومة الإجهاد جامد. والسنون المدرفلة (Rolled) أحسن من المشغولة.</li>
+    <li>المسمار لو اتكسر قص (Shear) يبقى الوصلة زحفت، والسبب Preload قليل.</li>
+   </ul>
+  </div>
+ </div>
+
+ <div class="card" style="margin-top:20px">
+  <h3>Best practice للربط</h3>
+  <div class="cols">
+   <ul class="clean" style="font-size:.93rem">
+    <li>الهدف 75% من Proof load للوصلات اللي بتتفك، و90% للوصلات الدائمة.</li>
+    <li>طول التعشيق = (1 إلى 1.5) × القطر. الـ 1.5 للمعادن الطرية زي الألومنيوم والبرونز.</li>
+    <li>زيّت السن <b>وتحت الراس</b>. لو نسيت الراس، الخطأ في الـ Preload ممكن يوصل 50%. والتزييت بيحسن دقة الـ Preload حوالي 25%.</li>
+    <li>خلّي الشحم بعيد عن أسطح الوصلة (زي فلانشة الكبلنج) لأنه بيقلل الاحتكاك والوصلة تزحف.</li>
+   </ul>
+   <ul class="clean" style="font-size:.93rem">
+    <li>اربط بنمط النجمة على 3 مراحل: 30% ثم 60% ثم 100%، ولو العضو بيلف لِفّه بين كل مرحلة.</li>
+    <li>ما تعيدش استخدام صواميل، واستخدم Screws جديدة، وNord-lock أو Loctite لو لزم.</li>
+    <li>أعد الربط بعد التشغيل والتسخين.</li>
+    <li>سجّل عزم الفك وقارنه بعزم الربط، لأن الفرق بيكشف مشاكل التجميع.</li>
+   </ul>
+  </div>
+ </div>
+
+ <h3 style="margin-top:28px">حالة الفصل</h3>
+ <div class="cases" data-ch="7"></div>
+</section>
+
+<!-- ALL CASES -->
+<section class="ch" id="cases">
+ <div class="ch-head"><span class="ch-num">19</span><div><h2>أرشيف الحالات الدراسية</h2>
+ <p>كل حالة فيها: شكل العطل (Failure mode)، والسبب الجذري الفيزيائي، والسبب الكامن (Latent)، والحل، والنتيجة. فلتر حسب الفصل أو دوّر بكلمة.</p></div></div>
+ <div class="row" id="caseFilters">
+  <button class="chip" data-f="all" aria-pressed="true">الكل</button>
+  <button class="chip" data-f="3" aria-pressed="false">الإجهاد</button>
+  <button class="chip" data-f="4" aria-pressed="false">الرولمان</button>
+  <button class="chip" data-f="5" aria-pressed="false">الطلمبات</button>
+  <button class="chip" data-f="6" aria-pressed="false">نقل الحركة</button>
+  <button class="chip" data-f="7" aria-pressed="false">المسامير</button>
+  <label for="caseQ" class="label" style="margin-inline-start:auto">بحث</label>
+  <input id="caseQ" type="search" placeholder="مثلاً: رنين، تكهف، زيت" style="border:1px solid var(--line);border-radius:4px;padding:5px 10px;background:var(--panel);min-width:0;flex:1 1 180px;max-width:280px">
+ </div>
+ <div class="cases" id="allCases"></div>
+</section>
+
+<!-- CHEAT SHEET -->
+<section class="ch" id="cheat">
+ <div class="ch-head"><span class="ch-num">Σ</span><div><h2>ورقة المعادلات والأرقام المرجعية</h2><p>كل معادلة في الكتاب ممكن تتحول لقائمة أسباب محتملة: كل متغير فيها سؤال لازم تجاوب عليه.</p></div></div>
+ <div class="tbl card"><table>
+  <tr><th>الموضوع</th><th>المعادلة / الرقم</th><th>بتستخدمها في إيه</th></tr>
+  <tr><td>ثقافة المؤسسة</td><td class="n">C = Be(Bh) / R</td><td>الثقافة = الاعتقاد × السلوك ÷ التقدير. لو السلوك مخالف للاعتقاد الثقافة بتتلخبط</td></tr>
+  <tr><td>نقل العزم بالتداخل</td><td class="n">T = E·i·t·l·f·π</td><td>تحليل زحف الكبلنج أو الـ Hub</td></tr>
+  <tr><td>حد التحمل</td><td class="n">Se′ = 0.504·Sut ; Se = Se′·Ka·Kb·Kc·Kd·Ke</td><td>هل الإجهاد الدوري تحت حد التحمل؟ (يعني عمر لا نهائي)</td></tr>
+  <tr><td>عدد الدورات</td><td class="n">N = (σa/a)^(1/b)</td><td>تقدير إمتى هيحصل كسر الإجهاد</td></tr>
+  <tr><td>عمر الرولمان</td><td class="n">L10 = a1a2a3·(16667/n)·(C/P)^p</td><td>p = 3 بلي · 10/3 رولرز</td></tr>
+  <tr><td>التمدد الحراري</td><td class="n">Δ = α·L·ΔT</td><td>الـ Floating end، وفتحة الكبلنج</td></tr>
+  <tr><td>الرنين</td><td class="n">f = (1/2π)·√(k/m)</td><td>اشتغل بعيد عن الرنين بـ 15–20%</td></tr>
+  <tr><td>NPSH</td><td class="n">NPSHA = P1 + Hs − Hvp − Hf</td><td>لازم NPSHA أكبر من NPSH3 × الهامش</td></tr>
+  <tr><td>السرعة النوعية للشفط</td><td class="n">S = N·√Q / NPSHR^0.75</td><td>بيدخل في حساب Suction Energy</td></tr>
+  <tr><td>قدرة الموتور</td><td class="n">BHP = 1.732·I·V·pf·η / 746</td><td>نقطة التشغيل من التيار</td></tr>
+  <tr><td>قدرة الطلمبة</td><td class="n">BHP = Q·H·SG / (3960·η)</td><td>تحقق من التصرف</td></tr>
+  <tr><td>الغمر الأدنى</td><td class="n">S = D + 0.574·Q / D^1.5</td><td>منع الدوامة (Vortex) ودخول الهوا</td></tr>
+  <tr><td>ضغط الـ Stuffing box</td><td class="n">SBP = Hs + 0.1·TDH</td><td>مية السيل لازم تكون أعلى بـ 10–15 psi</td></tr>
+  <tr><td>قانون التشابه</td><td class="n">P2 = P1·(N2/N1)³</td><td>تأثير تغيير السرعة على القدرة</td></tr>
+  <tr><td>عزم القصور الذاتي</td><td class="n">T = WK²·ΔN / (307.2·Δt)</td><td>أحمال التسارع والفرملة</td></tr>
+  <tr><td>عزم المسمار</td><td class="n">T = K·D·F</td><td>K = 0.15 مزيّت / 0.2 ناشف</td></tr>
+  <tr><td>حمل المسمار</td><td class="n">Fb = C·P + Fi</td><td>الـ Preload بيقلل الحمل الدوري</td></tr>
+  <tr><td>عائد مهندس الاعتمادية</td><td class="n">≈ 10 : 1</td><td>100 ألف دولار مرتب مقابل مليون أو أكتر وفورات</td></tr>
+ </table></div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap">ملخص مرجعي تعليمي لكتاب <span class="en">Practical Root Cause Failure Analysis: Key Elements, Case Studies, and Common Equipment Failures</span> — <span class="en">Randy Riddell, CRC Press, 2022 · DOI 10.1201/9781003248675</span>. الأرقام كلها من حالات الكتاب. منحنى الطلمبة ومنحنى S-N هنا توضيحيين ومبنيين على معادلات الكتاب وقيم حالاته، ومش بديل عن منحنى المصنّع.</div>
+</footer>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function press(group,btn){group.forEach(b=>b.setAttribute('aria-pressed',b===btn?'true':'false'))}
+
+/* ---------- HERO crack animation ---------- */
+(function(){
+ const beach=$('#beach'), ffz=$('#ffz'), nT=$('#heroN'), st=$('#heroStage'), bar=$('#heroBar');
+ const cx=130,cy=130,R=95, ox=cx-R*Math.cos(Math.PI/4), oy=cy+R*Math.sin(Math.PI/4); // origin bottom-left (tension side)
+ let k=0;
+ function arc(r){ // arc centered at origin clipped by shaft circle approx
+  const pts=[];for(let a=-100;a<=10;a+=5){const t=a*Math.PI/180;const x=ox+r*Math.cos(t), y=oy+r*Math.sin(t);if(Math.hypot(x-cx,y-cy)<R-1)pts.push([x,y])}
+  return pts.length>1?'M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L'):'';
+ }
+ function step(){
+  k=(k+1)%15;
+  beach.innerHTML='';
+  const n=Math.min(k,10);
+  for(let i=1;i<=n;i++){el('path',{d:arc(i*14),fill:'none',stroke:i===n?'var(--signal)':'var(--muted)','stroke-width':i===n?2.4:1.2},beach)}
+  ffz.setAttribute('d',k>=11?'M'+(cx+30)+' '+(cy-90)+' A95 95 0 0 1 '+(cx+92)+' '+(cy-15)+' L '+(cx+40)+' '+(cy-20)+' Z':'');
+  ffz.setAttribute('opacity',k>=11?'.6':'0');
+  nT.textContent=k>=11?'≈ 10⁷ (كسر)':fmt(Math.round(Math.pow(10,4+n*0.3)));
+  st.textContent=k===0?'بداية الشرخ':k<11?'نمو الشرخ ('+n+')':'كسر سريع نهائي';
+  st.setAttribute('fill',k>=11?'var(--fail)':'var(--ink)');
+  bar.setAttribute('width',Math.min(130,k*10));
+  bar.setAttribute('fill',k>=11?'var(--fail)':'var(--signal)');
+ }
+ if(reduce){k=9;step();}else{step();setInterval(step,700);}
+})();
+
+/* ---------- Pyramid ---------- */
+const levels=[
+ {n:4,t:'المستوى 4 · عطل وظيفي (Functional)',d:'الأصل مش قادر يأدي وظيفته بالمعيار المطلوب. مثال: طلمبة مصممة لـ 1000gpm وبتطلع 700gpm بس، أو رولمان علِق والكبلنج اتقص.',s:'التشغيل لحد العطل (Run to Failure)',c:'var(--fail)'},
+ {n:3,t:'المستوى 3 · عطل ثانوي (Minor / Component)',d:'مكون فقد وظيفته، لكن الأصل لسه شغال. مثال: السيل بيسرّب والطلمبة لسه بتطلع 1000gpm.',s:'الصيانة الوقائية (PM)',c:'var(--signal)'},
+ {n:2,t:'المستوى 2 · عطل مخفي (Hidden defect)',d:'عيب حقيقي في القطعة لكنها لسه بتشتغل. أمثلة: عيب في مسار الرولمان، تدهور التزييت، شرخ إجهاد بيكبر.',s:'PM + الصيانة التنبؤية (PdM)',c:'var(--cool)'},
+ {n:1,t:'المستوى 1 · ظروف ما قبل العطل',d:'حاجات هتعمل عطل لو اتسابت: عدم تصويب، عدم اتزان، تكهف، رخاوة، تزييت ضعيف، رنين، تشغيل برة حدود التصميم (ضغط، تصرف، حمل، سرعة).',s:'PdM + الصيانة الاستباقية (Proactive)',c:'var(--machine)'}
+];
+(function(){
+ const g=$('#pyramid'); const H=50, top=10, W=400, cx=210;
+ levels.forEach((L,i)=>{
+  const y=top+i*H, w1=W*(i)/4+40, w2=W*(i+1)/4+40;
+  const grp=el('g',{tabindex:0,role:'button','aria-label':L.t,style:'cursor:pointer'},g);
+  el('path',{d:`M${cx-w1/2} ${y} L${cx+w1/2} ${y} L${cx+w2/2} ${y+H-4} L${cx-w2/2} ${y+H-4} Z`,fill:L.c,opacity:.85,stroke:'var(--panel)','stroke-width':2},grp);
+  const tx=el('text',{x:cx,y:y+H/2+3,'text-anchor':'middle','font-size':i===0?11:13,'font-weight':700,fill:'var(--panel)'},grp);
+  tx.textContent=i===0?'4':'المستوى '+L.n;
+  const show=()=>{$('#lvlDetail').innerHTML=`<b style="color:${L.c}">${L.t}</b><br>${L.d}<br><span class="label">استراتيجية الصيانة المقابلة:</span> ${L.s}`;
+   g.querySelectorAll('path').forEach((p,j)=>p.setAttribute('opacity',j===i?1:.45))};
+  grp.addEventListener('click',show);grp.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show()}});
+  if(i===3)show();
+ });
+ const t=el('text',{x:cx,y:top+4*H+12,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},g);
+ t.textContent='كل ما تتعامل مع مستوى أوطى، كل ما تبقى Proactive أكتر';
+})();
+
+/* ---------- PF curve ---------- */
+(function(){
+ const r=$('#pfT'), c=$('#pfCursor'), out=$('#pfOut'), info=$('#pfInfo');
+ function up(){
+  const x=+r.value; c.setAttribute('x1',x);c.setAttribute('x2',x);
+  let txt,lbl;
+  if(x<130){lbl='تصميم';txt='<b>التصميم (D):</b> هنا بيتحدد سقف الاعتمادية. Design for Reliability وFMEA. أساس صب كويس، اختيار صح للمعدة، وقطع غيار حرجة.'}
+  else if(x<220){lbl='تركيب';txt='<b>التركيب (I):</b> تصويب، اتزان، تركيب دقيق، ومنع إجهاد المواسير (Pipe strain). الصيانة لازم توقّع على قيم الاستلام. وتدريب المشغلين والفنيين.'}
+  else if(x<470){lbl='تشغيل';txt='<b>قبل P · منع العطل:</b> صيانة استباقية (تصويب واتزان)، تميّز في التزييت، PM، وتحليل اهتزاز لظروف ما قبل العطل، وتحليل زيت لحالة الزيت (لزوجة، إضافات، تلوث، أكسدة، TAN). ظروف المستوى 1 بتقصّر الفترة دي.'}
+  else if(x<760){lbl='بعد P';txt='<b>بعد P · إدارة العطل:</b> PdM بيلاقي العيب: اهتزاز (عيوب رولمان)، معادن تآكل في الزيت، Ultrasound، تصوير حراري IR. هنا الاهتزاز ما منعش العطل، هو بس اداك وقت تخطط. كل نمط عطل ليه ميل مختلف لمنحنى P-F.'}
+  else {lbl='قرب F';txt='<b>قرب F · العناية الأساسية (Basic care):</b> حس (حرارة واهتزاز)، شم، صوت، نظر. وقت قليل جداً. رد فعلك بيعتمد على المستوى، وأهمية المعدة، وفترة P-F، وتكلفة العطل.'}
+  out.textContent=lbl; info.innerHTML=txt;
+ }
+ r.addEventListener('input',up);up();
+})();
+
+/* ---------- 5 Rights ---------- */
+const rightsData=[
+ {h:'النظام الصحيح (Right System)',b:`<p>الثقافة: <span class="mono">C = Be(Bh)/R</span>. لازم مدير المصنع يدعم، ومدير الاعتمادية يملك النظام، ويكون فيه موارد للتنفيذ.</p>
+ <ul class="clean"><li><b>التوثيق:</b> Word أو Excel بشكل بسيط ومُدار، أو قاعدة بيانات ليها Owner ودعم IT، ومربوطة بأكواد الأعطال في الـ CMMS.</li>
+ <li><b>احذر "فقدان الذاكرة المؤسسية":</b> لما الناس تمشي المعرفة بتمشي معاهم، والأعطال بترجع كل جيل (النهارده الجيل حوالي 10 سنين).</li>
+ <li><b>Kepner-Tregoe (طريقة الفروق):</b> قارن ماكينة بتعطل بماكينة مش بتعطل، والفروق بس هي الأسباب المحتملة. مثال: رولمانات السلندرات بتتشرخ بس في الماكينات اللي الـ Desuperheater بتاعها عطلان.</li>
+ <li><b>5 Whys:</b> سهلة وسريعة لمشرف الوردية، بس خطية وبتعتمد على خبرة اللي بيحللها.</li>
+ <li><b>Failure-mode logic tree:</b> بتتفرع من شكل العطل الفعلي وما بتسيبش سبب. "الناس هي اللي بتحل الأعطال، والطريقة مجرد أداة."</li></ul>`},
+ {h:'الموارد الصحيحة (Right Resources)',b:`<ul class="clean"><li><b>الناس:</b> مهندسين اعتمادية ميكانيكا وكهربا (كل واحد بيغطي 1–3 مناطق)، وخبرا متخصصين SME (طلمبات، معادن، Drives). الخبرة ما ينفعش تختصرها.</li>
+ <li><b>من بره:</b> ورش Rebuild بجودة عالية، ومعامل تحليل زيت واهتزاز ومعادن.</li>
+ <li><b>الميزانية:</b> تدريب، وسفر عشان تحضر فك المعدة في الورشة. عائد مهندس الاعتمادية حوالي 10:1، وأحياناً 20:1.</li>
+ <li><b>الأدوات:</b> عدسات، كاميرات، أجهزة صلادة للمعادن والمطاط، قياس خشونة السطح، قياس سرعة السريان، تحليل القدرة.</li></ul>
+ <p class="note">نظام كويس مع ناس غلط، أو ناس كويسة مع نظام غلط، الاتنين بيدّوا نتيجة ضعيفة.</p>`},
+ {h:'الدليل الصحيح (Right Evidence)',b:`<ul class="clean"><li><b>موقع العطل أولاً:</b> صوّر كتير قبل ما أي حاجة تتحرك أو تتنضف. القطعة المكسورة هي الدليل، ومن غيرها الـ RCFA بيبقى تخمين. وما تنضفش الزيت أو الشحم.</li>
+ <li><b>اسأل الشهود بسرعة:</b> التفاصيل بتتنسي، والناس ساعات بتلوي القصة عشان تناسب رأيها. مثال Felt roll: شاهد واحد شاف الرول وقف فجأة، فالتحقيق ابعد عن فكرة شرخ الشاسيه، والسبب طلع رولمان علِق لأن ماسورة التزييت اتكسرت بسبب Housing fit واسع.</li>
+ <li><b>احضر الفك:</b> مثال موتور بعد 9 شهور: الـ Housing ما اتملاش شحم خالص، والشحم الجديد قاعد في الفراغ.</li>
+ <li><b>نوع العطل:</b> واحد ولا متعدد؟ حدد الأساسي (Primary) من الثانوي. اسأل: هل A ممكن يعمل B؟</li>
+ <li><b>السلامة:</b> موقع العطل الكارثي اتعامل معاه زي لعبة Pick-up sticks، وقيّم الأحمال في كل خطوة.</li></ul>`},
+ {h:'التحليل الصحيح (Right Analysis)',b:`<ul class="clean"><li><b>Failure mode:</b> وصفه هو الخريطة. مثال: "كسر عمود" ← "كسر عند الـ Step ورا الرولمان" ← "إجهاد انحناء دوار، دورات كتير وإجهاد قليل مع تركيز إجهادات شديد".</li>
+ <li><b>الأسباب المحتملة:</b> اللي ممكن تعمل الـ Failure mode ده بس. "ثق في ربنا، وأي حد تاني يجيب داتا."</li>
+ <li><b>البيانات:</b> تاريخ أوامر الشغل، تقارير الـ Rebuild، الـ PM والـ PdM، الرسومات، المانيوال، ومتغيرات التصميم (حمل، ضغط، سرعة، حرارة، تصرف، قدرة، عزم).</li>
+ <li><b>فيزياء العطل وأنماط العطل:</b> قارن عمر القطعة بعمرها الكامل المتوقع.</li>
+ <li><b>إمتى توقف:</b> عند مستوى التحكم الممكن. ومراجعة أخيرة: احكي قصة العطل من أولها، وشوف هل منطقية؟ "مفيش حاجة اسمها لغز، فيه بس نقص في الفهم".</li>
+ <li><b>لو ما لقيتش سبب قاطع:</b> اجمع الأدلة الظرفية زي القضية، أو اتجنب المشكلة. مثال: رولمان Pickup roll ما اتحلش في 12 شهر، والحل كان تغيير الماركة، ومحدش عرف السبب.</li></ul>`},
+ {h:'الإجراءات الصحيحة (Right Corrective Actions)',b:`<ul class="clean"><li>نظام يسجل ويتابع (Excel أو سبورة أو قاعدة بيانات)، ومراجعة شهرية، وتواريخ واقعية.</li>
+ <li>غطّي Physical وHuman وLatent. والـ Human من غير عقاب.</li>
+ <li>استخدم نمط العطل: Infant mortality ← إجراءات وتدريب · Wear-out ← PM · Random ← غالباً مش PM.</li>
+ <li>اكتب كل الإجراءات الممكنة حتى اللي مش هتتنفذ، وابدأ بالأرخص والأقل تدخلاً زي الدكتور.</li>
+ <li>اختار المسؤول الصح. أحسن تخلّص قليل صح من كتير بالنص.</li>
+ <li><b>اقفل الدايرة:</b> اتأكد من النتيجة في القياس أو العَمرة الجاية.</li></ul>
+ <p class="note warn">ممكن تكسب الماتش كله وتخسر في آخر لعبة: سبب جذري صح من غير إجراءات منفذة = مفيش عائد.</p>`}
+];
+(function(){
+ const btns=$$('#rights .right'); let broken=-1, sel=0;
+ const status=$('#chainStatus'), det=$('#rightDetail');
+ function render(){
+  btns.forEach((b,i)=>{b.classList.toggle('broken',i===broken);b.setAttribute('aria-pressed',i===sel?'true':'false')});
+  det.innerHTML='<h3>'+rightsData[sel].h+'</h3>'+rightsData[sel].b;
+  status.className='note '+(broken<0?'key':'warn');
+  status.innerHTML=broken<0?'السلسلة سليمة ← <b>RCFA ناجح</b>. (دوس مرتين على أي حلقة تكسرها)':'الحلقة "'+btns[broken].firstChild.textContent+'" مكسورة ← <b>RCFA فاشل</b> حتى لو الباقي اتعمل صح. مثلاً لو اتحفظ الجزء الغلط، هتحلل نمط عطل ما حصلش.';
+ }
+ btns.forEach((b,i)=>{b.addEventListener('click',()=>{sel=i;render()});b.addEventListener('dblclick',()=>{broken=broken===i?-1:i;render()})});
+ render();
+})();
+
+/* ---------- 5 whys vs tree ---------- */
+(function(){
+ const svg=$('#whySvg'); const bW=$('#btnWhy'), bT=$('#btnTree');
+ function box(x,y,w,t,c,h){const g=el('g',{},svg);el('rect',{x:x-w/2,y,width:w,height:h||30,rx:4,fill:c||'var(--machine-soft)',stroke:'var(--ink)','stroke-width':1},g);const tx=el('text',{x,y:y+(h||30)/2+4,'text-anchor':'middle','font-size':11.5},g);tx.textContent=t;return g}
+ function line(x1,y1,x2,y2,c){el('line',{x1,y1,x2,y2,stroke:c||'var(--muted)','stroke-width':1.3},svg)}
+ function whys(){svg.innerHTML='';const s=['خلط ضعيف','تقليب ضعيف','الـ Agitator مش بيلف','السيور اتحرقت','حمل زايد','ترسيبات في التانك'];
+  s.forEach((t,i)=>{const y=8+i*48;box(260,y,200,(i?'ليه '+i+' ← ':'')+t,i===5?'var(--signal-soft)':'var(--machine-soft)');if(i)line(260,y-18,260,y)});
+  const tx=el('text',{x:400,y:268,'text-anchor':'middle','font-size':11,fill:'var(--fail)'},svg);tx.textContent='؟ طب ليه الترسيبات';
+  const t2=el('text',{x:120,y:268,'text-anchor':'middle','font-size':11,fill:'var(--fail)'},svg);t2.textContent='؟ وفين باقي الأسباب';
+ }
+ function tree(){svg.innerHTML='';box(260,6,170,'السيور اتحرقت','var(--fail-soft)');
+  const L1=[[70,'طارة متآكلة'],[195,'حمل أكبر من السعة'],[325,'شد قليل'],[450,'عدم تصويب']];
+  L1.forEach(([x,t])=>{line(260,36,x,80);box(x,80,118,t)});
+  const L2=[[35,'مادة كاشطة'],[105,'سيور غلط'],[160,'موتور HP غلط'],[230,'عدد سيور أقل'],[300,'تلامس قليل'],[365,'تلوث'],[425,'Offset'],[485,'Angular']];
+  const par=[70,70,195,195,325,325,450,450];
+  L2.forEach(([x,t],i)=>{line(par[i],110,x,170);box(x,170,66,t,'var(--panel)',40)});
+  const tx=el('text',{x:260,y:250,'text-anchor':'middle','font-size':11.5,fill:'var(--machine)'},svg);tx.textContent='كل فرع لازم يتثبت أو يتنفي بداتا';
+  const t3=el('text',{x:260,y:270,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},svg);t3.textContent='السبب الحقيقي: طارات غلط اتركبت في آخر تغيير للـ spare، سرعة وعدد سيور غلط';
+ }
+ bW.addEventListener('click',()=>{press([bW,bT],bW);whys()});bT.addEventListener('click',()=>{press([bW,bT],bT);tree()});whys();
+})();
+
+/* ---------- primary/secondary ---------- */
+(function(){
+ const out=$('#psOut'); const btns=$$('#psQuiz .chip');
+ const msg={A:'<b>غلط.</b> هل تآكل الحلقة (A) ممكن يكسر الرولمان (B)؟ لأ. وطرف الحلقة التاني بنفس الخامة سليم كأنه جديد (طريقة الفروق). يعني المشكلة مش في الخامة، وكان فيه كلام فعلاً عن تغيير خامة الجنزير.',
+  B:'<b>صح.</b> الرولمان علِق ← العزم على الجلبة زاد ← فلانشة الجلبة اتقطعت ← المسمار اشتغل كجلبة احتكاك (Journal) على الحلقات من غير تزييت ← الحلقة رقّت واتقطعت من شد الجنزير. السبب الجذري: نظام رش الزيت كان عطلان من مدة طويلة.',
+  C:'<b>ثانوي.</b> اللوح اتنى بعد ما جنب واحد من الجنزير اتفك.',D:'<b>ثانوي.</b> الحلقات اتنت نتيجة الانهيار.'};
+ btns.forEach(b=>b.addEventListener('click',()=>{btns.forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');const a=b.dataset.a;out.className='note '+(a==='B'?'key':a==='A'?'warn':'');out.innerHTML=msg[a]}));
+})();
+
+/* ---------- failure patterns ---------- */
+(function(){
+ const svg=$('#patterns');
+ const P=[
+  {t:'Bathtub',p:'4%',age:1,f:x=>x<.15?.9-4*x:x>.8?.3+3*(x-.8):.3},
+  {t:'Wear-out',p:'2%',age:1,f:x=>x>.7?.15+2.4*(x-.7):.15},
+  {t:'Fatigue',p:'5%',age:1,f:x=>.1+.6*x},
+  {t:'Initial break-in',p:'7%',age:0,f:x=>x<.2?.1+2.5*x:.6},
+  {t:'Random',p:'14%',age:0,f:x=>.4},
+  {t:'Infant mortality',p:'68%',age:0,f:x=>x<.15?.9-3.5*x:.38}
+ ];
+ const w=150,h=110,gap=10;
+ P.forEach((p,i)=>{
+  const x0=i*(w+gap)+5,y0=30;
+  el('rect',{x:x0,y:y0,width:w,height:h,fill:p.age?'var(--signal-soft)':'var(--machine-soft)',rx:4},svg);
+  let d='';for(let k=0;k<=40;k++){const xx=k/40;const yy=Math.min(1,Math.max(0,p.f(xx)));d+=(k?'L':'M')+(x0+8+xx*(w-16)).toFixed(1)+' '+(y0+h-8-yy*(h-24)).toFixed(1)}
+  el('path',{d,fill:'none',stroke:p.age?'var(--signal)':'var(--machine)','stroke-width':2.5,class:'drawn'},svg);
+  const a=el('text',{x:x0+w/2,y:y0+h+20,'text-anchor':'middle','font-size':12,'font-weight':700},svg);a.textContent=p.t;
+  const b=el('text',{x:x0+w/2,y:y0+h+40,'text-anchor':'middle','font-size':15,class:'m',fill:p.age?'var(--signal)':'var(--machine)','font-weight':600},svg);b.textContent=p.p;
+ });
+ const l1=el('text',{x:5+1.5*(w+gap)-5,y:18,'text-anchor':'middle','font-size':12,fill:'var(--signal)','font-weight':700},svg);l1.textContent='مرتبطة بالعمر 11% · الـ PM ممكن يفيد';
+ const l2=el('text',{x:5+4.5*(w+gap)-5,y:18,'text-anchor':'middle','font-size':12,fill:'var(--machine)','font-weight':700},svg);l2.textContent='عشوائية 89% · الـ PM غالباً مش هيفيد';
+})();
+
+/* ---------- Swiss cheese ---------- */
+(function(){
+ const svg=$('#swiss'); const btn=$('#swissBtn');
+ const layers=['التصميم: مفيش زجاجة بيان','التركيب: الإجراء ما اتنفذش','التزييت: مفيش زيت للشغلانة','العناية الأساسية: محدش شاف الحرارة','PdM: العطل قبل القراءة'];
+ const holes=[30,150,70,170,110]; const gs=[];
+ layers.forEach((t,i)=>{const x=60+i*95;const g=el('g',{style:'transition:transform 1s ease'},svg);
+  el('rect',{x:x,y:20,width:34,height:190,rx:6,fill:'var(--signal-soft)',stroke:'var(--signal)','stroke-width':1.5},g);
+  el('ellipse',{cx:x+17,cy:20+holes[i]+12,rx:9,ry:14,fill:'var(--paper)',stroke:'var(--signal)'},g);
+  el('ellipse',{cx:x+17,cy:20+((holes[i]+90)%170)+10,rx:6,ry:9,fill:'var(--paper)',stroke:'var(--signal)'},g);
+  gs.push(g);
+  const tx=el('text',{x:x+17,y:226,'text-anchor':'middle','font-size':9.5},svg);tx.textContent=t.split(':')[0];
+ });
+ const arrow=el('g',{opacity:0,style:'transition:opacity .4s'},svg);
+ el('line',{x1:10,y1:122,x2:540,y2:122,stroke:'var(--fail)','stroke-width':3,'stroke-dasharray':'8 5'},arrow);
+ el('path',{d:'M540 122 l-12 -7 l0 14 z',fill:'var(--fail)'},arrow);
+ const ft=el('text',{x:548,y:116,'font-size':12,'font-weight':700,fill:'var(--fail)','text-anchor':'end'},arrow);ft.textContent='عطل';
+ let aligned=false;
+ btn.addEventListener('click',()=>{aligned=!aligned;btn.setAttribute('aria-pressed',aligned);btn.textContent=aligned?'رجّع الطبقات':'رتّب الخروم';
+  gs.forEach((g,i)=>g.style.transform=aligned?`translateY(${90-holes[i]}px)`:'translateY(0)');
+  arrow.setAttribute('opacity',aligned?1:0)});
+})();
+
+/* ---------- S-N ---------- */
+(function(){
+ const ids=['sut','ka','kb','ke','sa']; const svg=$('#snSvg');
+ const X0=50,X1=440,Y0=260,Y1=20;
+ const lx=n=>X0+(Math.log10(n))/8*(X1-X0);
+ function draw(){
+  const Sut=+$('#sut').value, Ka=+$('#ka').value, Kb=+$('#kb').value, Ke=+$('#ke').value, sa=+$('#sa').value;
+  $('#sutO').textContent=Sut; $('#kaO').textContent=Ka.toFixed(2); $('#kbO').textContent=Kb.toFixed(2); $('#keO').textContent=Ke.toFixed(2); $('#saO').textContent=sa;
+  const Se1=0.504*Sut, Se=Se1*Ka*Kb*Ke;
+  $('#se1').textContent=Se1.toFixed(1)+' ksi'; $('#se2').textContent=Se.toFixed(1)+' ksi';
+  const a=Math.pow(0.9*Sut,2)/Se, b=-Math.log10(0.9*Sut/Se)/3;
+  let N, verdict;
+  if(sa<=Se){N=Infinity;verdict='<span class="pill p-ok">عمر لا نهائي</span> الإجهاد الدوري أقل من حد التحمل للقطعة.'}
+  else if(sa>=0.9*Sut){N=1e3;verdict='<span class="pill p-bad">Low-cycle / حمل زايد</span> الإجهاد أكبر من 0.9·Sut.'}
+  else{N=Math.pow(sa/a,1/b);verdict='<span class="pill p-warn">عمر محدود</span> اعمل حاجة من اتنين: قلّل الإجهاد الدوري تحت '+Se.toFixed(1)+' ksi، أو ارفع Se بتحسين السطح أو الـ Radius أو الخامة.'}
+  $('#nOut').textContent=N===Infinity?'∞':N>=1e3?N.toExponential(1).replace('e+',' ×10^'):'<10^3';
+  $('#lifeVerdict').innerHTML='<p style="font-size:.92rem">'+verdict+'</p>';
+  svg.innerHTML='';
+  const ymax=Math.max(Sut,70); const ly=s=>Y0-(s/ymax)*(Y0-Y1);
+  el('line',{x1:X0,y1:Y0,x2:X1,y2:Y0,stroke:'var(--ink)'},svg);el('line',{x1:X0,y1:Y0,x2:X0,y2:Y1,stroke:'var(--ink)'},svg);
+  for(let e=0;e<=8;e+=2){const t=el('text',{x:lx(Math.pow(10,e)),y:Y0+16,'text-anchor':'middle','font-size':10,class:'m'},svg);t.textContent='10^'+e}
+  const tl=el('text',{x:(X0+X1)/2,y:Y0+34,'text-anchor':'middle','font-size':11},svg);tl.textContent='عدد الدورات N (log)';
+  [0,ymax/2,ymax].forEach(v=>{const t=el('text',{x:X0-6,y:ly(v)+4,'text-anchor':'end','font-size':10,class:'m'},svg);t.textContent=Math.round(v)});
+  // curve: from 10^3 at 0.9Sut to Ne at Se then flat
+  const Ne=Math.pow(Se/a,1/b);
+  let d=`M${lx(1)} ${ly(Sut)} L${lx(1e3)} ${ly(0.9*Sut)}`;
+  for(let e=3;e<=Math.min(8,Math.log10(Ne));e+=0.1){d+=` L${lx(Math.pow(10,e))} ${ly(a*Math.pow(Math.pow(10,e),b))}`}
+  d+=` L${lx(Math.min(1e8,Ne))} ${ly(Se)} L${X1} ${ly(Se)}`;
+  el('path',{d,fill:'none',stroke:'var(--machine)','stroke-width':3},svg);
+  el('line',{x1:X0,y1:ly(Se),x2:X1,y2:ly(Se),stroke:'var(--machine)','stroke-dasharray':'4 4'},svg);
+  const se=el('text',{x:X1-4,y:ly(Se)-6,'text-anchor':'end','font-size':11,fill:'var(--machine)'},svg);se.textContent='حد التحمل Se';
+  el('line',{x1:X0,y1:ly(sa),x2:X1,y2:ly(sa),stroke:'var(--fail)','stroke-width':2},svg);
+  const st=el('text',{x:X0+6,y:ly(sa)-6,'font-size':11,fill:'var(--fail)'},svg);st.textContent='σa الإجهاد الدوري';
+  if(isFinite(N)&&N>=1e3&&N<=1e8){el('circle',{cx:lx(N),cy:ly(sa),r:7,fill:'var(--fail)',class:'blink'},svg)}
+ }
+ ids.forEach(i=>$('#'+i).addEventListener('input',draw));draw();
+})();
+
+/* ---------- Bearing L10 ---------- */
+(function(){
+ let p=3, dbl=false; const bB=$('#bBall'), bR=$('#bRoll'), bD=$('#bDouble');
+ function calc(){
+  const C=+$('#bC').value, P0=+$('#bP').value, n=+$('#bN').value, a3=+$('#bA3').value; const P=dbl?P0*2:P0;
+  $('#bCO').textContent=fmt(C);$('#bPO').textContent=fmt(P)+(dbl?' ×2':'');$('#bNO').textContent=n;$('#bA3O').textContent=a3.toFixed(2);
+  const L=a3*(16667/n)*Math.pow(C/P,p);
+  $('#l10h').textContent=fmt(L); $('#l10y').textContent=(L/8760).toFixed(1);
+ }
+ ['bC','bP','bN','bA3'].forEach(i=>$('#'+i).addEventListener('input',calc));
+ bB.addEventListener('click',()=>{p=3;press([bB,bR],bB);calc()});bR.addEventListener('click',()=>{p=10/3;press([bB,bR],bR);calc()});
+ bD.addEventListener('click',()=>{dbl=!dbl;bD.setAttribute('aria-pressed',dbl);calc()});
+ calc();
+ // balls
+ const g=$('#balls');for(let i=0;i<12;i++){const a=i/12*2*Math.PI;el('circle',{cx:160+100*Math.cos(a),cy:160+100*Math.sin(a),r:15,fill:'var(--cool-soft)',stroke:'var(--ink)','stroke-width':1.5},g)}
+ const lz=$('#loadZone'), lab=$('#lzLabel'); const ok=$('#lzOk'), bad=$('#lzBad');
+ function sector(deg){if(deg>=360)return 'M160 20 A140 140 0 1 1 159.9 20 Z';const a0=(90-deg/2)*Math.PI/180,a1=(90+deg/2)*Math.PI/180;
+  return `M160 160 L${160+140*Math.cos(a0)} ${160+140*Math.sin(a0)} A140 140 0 0 1 ${160+140*Math.cos(a1)} ${160+140*Math.sin(a1)} Z`}
+ function setZ(b){lz.setAttribute('d',sector(b?360:120));lab.textContent=b?'360° · حمل زايد على كل الحلقة':'≈120° · منطقة حمل طبيعية';lab.setAttribute('fill',b?'var(--fail)':'var(--ink)');press([ok,bad],b?bad:ok)}
+ ok.addEventListener('click',()=>setZ(false));bad.addEventListener('click',()=>setZ(true));setZ(false);
+})();
+
+/* ---------- Pump curve ---------- */
+(function(){
+ const svg=$('#pumpSvg'); const X0=50,X1=460,Y0=250,Y1=20; const Qmax=7000,Hmax=240;
+ const H=q=>205-0.0000032*q*q; // illustrative ~ 13.6" impeller
+ const N3=q=>8+0.0000009*q*q;
+ const BEP=4400,POR=[3080,5280],AOR=[1800,6200];
+ const sx=q=>X0+q/Qmax*(X1-X0), sy=h=>Y0-h/Hmax*(Y0-Y1);
+ el('rect',{x:sx(AOR[0]),y:Y1,width:sx(AOR[1])-sx(AOR[0]),height:Y0-Y1,fill:'var(--signal-soft)'},svg);
+ el('rect',{x:sx(POR[0]),y:Y1,width:sx(POR[1])-sx(POR[0]),height:Y0-Y1,fill:'var(--machine-soft)'},svg);
+ el('line',{x1:X0,y1:Y0,x2:X1,y2:Y0,stroke:'var(--ink)'},svg);el('line',{x1:X0,y1:Y0,x2:X0,y2:Y1,stroke:'var(--ink)'},svg);
+ [0,2000,4000,6000].forEach(q=>{const t=el('text',{x:sx(q),y:Y0+15,'text-anchor':'middle','font-size':10,class:'m'},svg);t.textContent=q});
+ [0,100,200].forEach(h=>{const t=el('text',{x:X0-5,y:sy(h)+4,'text-anchor':'end','font-size':10,class:'m'},svg);t.textContent=h});
+ const tq=el('text',{x:(X0+X1)/2,y:Y0+32,'text-anchor':'middle','font-size':11},svg);tq.textContent='Q gpm';
+ const th=el('text',{x:16,y:(Y0+Y1)/2,'text-anchor':'middle','font-size':11,transform:`rotate(-90 16 ${(Y0+Y1)/2})`},svg);th.textContent='Head ft';
+ let d='',d2='';for(let q=0;q<=6800;q+=100){d+=(q?'L':'M')+sx(q)+' '+sy(H(q));d2+=(q?'L':'M')+sx(q)+' '+sy(N3(q))}
+ el('path',{d,fill:'none',stroke:'var(--ink)','stroke-width':3},svg);
+ el('path',{d:d2,fill:'none',stroke:'var(--cool)','stroke-width':2,'stroke-dasharray':'6 4'},svg);
+ const nl=el('text',{x:sx(6300),y:sy(N3(6300))-8,'text-anchor':'end','font-size':10.5,fill:'var(--cool)'},svg);nl.textContent='NPSH3';
+ el('line',{x1:sx(BEP),y1:Y1,x2:sx(BEP),y2:Y0,stroke:'var(--machine)','stroke-width':1.5},svg);
+ const bt=el('text',{x:sx(BEP),y:Y1+14,'text-anchor':'middle','font-size':11,fill:'var(--machine)','font-weight':700},svg);bt.textContent='BEP';
+ const pt=el('text',{x:(sx(POR[0])+sx(POR[1]))/2,y:Y1+30,'text-anchor':'middle','font-size':10.5,fill:'var(--ok)'},svg);pt.textContent='POR';
+ const at=el('text',{x:sx(AOR[0])+6,y:Y1+14,'font-size':10.5,fill:'var(--signal)'},svg);at.textContent='AOR';
+ const dot=el('circle',{r:8,fill:'var(--fail)',stroke:'var(--panel)','stroke-width':2},svg);
+ const vib=el('g',{},svg);
+ const r=$('#qIn'), o=$('#qOut'), v=$('#pumpVerdict');
+ function up(){const q=+r.value;o.textContent=fmt(q);dot.setAttribute('cx',sx(q));dot.setAttribute('cy',sy(H(q)));
+  let cls,msg,c;
+  if(q<AOR[0]){cls='warn';c='p-bad';msg='<span class="pill p-bad">بره الـ AOR (شمال)</span> إعادة دوران شديدة وتكهف إعادة الدوران. تآكل الكيسينج والـ Wear plate وورا الـ Impeller، وأحمال قطرية، وانحراف العمود، وسخونية السائل. ده بالظبط اللي حصل في حالة الـ Stock dilution عند 1500gpm.'}
+  else if(q<POR[0]){cls='';c='p-warn';msg='<span class="pill p-warn">في الـ AOR بس بره الـ POR</span> مسموح بيه من المصنّع، لكن الاعتمادية بتقل: اهتزاز إعادة دوران وأحمال قطرية أعلى.'}
+  else if(q<=POR[1]){cls='key';c='p-ok';msg='<span class="pill p-ok">داخل الـ POR</span> أحسن كفاءة وأحسن اعتمادية (−30% لـ +20% من الـ BEP).'}
+  else if(q<=AOR[1]){cls='';c='p-warn';msg='<span class="pill p-warn">يمين الـ POR</span> الـ NPSHR بيعلى بسرعة، فراجع هامش الـ NPSH. وانحراف العمود بيزيد مع التصرف العالي.'}
+  else{cls='warn';c='p-bad';msg='<span class="pill p-bad">بره الـ AOR (يمين)</span> الـ NPSHR أكبر من الـ NPSHA فيحصل تكهف وتنقير على ناحية الشفط. حالة Loop 1: بلف ملو التانك بيفتح 100% والطلمبة تجري لـ 4000gpm.'}
+  v.className='note '+cls;v.innerHTML=msg;
+  vib.innerHTML='';if(c!=='p-ok'){for(let i=0;i<3;i++){el('circle',{cx:sx(q),cy:sy(H(q)),r:12+i*7,fill:'none',stroke:c==='p-bad'?'var(--fail)':'var(--signal)',opacity:.5-i*.15,class:'blink'},vib)}}
+ }
+ r.addEventListener('input',up);up();
+ // bars
+ const bs=$('#pumpBars'); const data=[['الرولمان',41],['الـ Impeller',21],['الكبلنج',16],['مانع التسرب',15],['العمود',7]];
+ data.forEach(([t,v],i)=>{const y=10+i*34;const lab=el('text',{x:410,y:y+18,'text-anchor':'end','font-size':12},bs);lab.textContent=t;
+  const w=v/45*280;el('rect',{x:410-110-w,y:y+4,width:w,height:20,fill:i===0?'var(--fail)':'var(--machine)',rx:2},bs);
+  const vt=el('text',{x:410-116-w,y:y+19,'text-anchor':'end','font-size':12,class:'m','font-weight':600},bs);vt.textContent=v+'%'});
+})();
+
+/* ---------- NPSH ---------- */
+(function(){
+ const ids=['p1','hs','hvp','hf','n3','mg'];
+ function up(){const v={};ids.forEach(i=>{v[i]=+$('#'+i).value;$('#'+i+'O').textContent=v[i]});
+  const A=v.p1+v.hs-v.hvp-v.hf, R=v.n3*v.mg;
+  $('#naO').textContent=A.toFixed(1)+' ft';$('#nrO').textContent=R.toFixed(1)+' ft';
+  $('#npshVerdict').innerHTML=A>R?'<p><span class="pill p-ok">مفيش تكهف ضار</span> NPSHA أكبر من NPSHR بهامش '+(A-R).toFixed(1)+' ft.</p>':'<p><span class="pill p-bad">تكهف ضار</span> ناقص '+(R-A).toFixed(1)+' ft. ده اللي حصل في طلمبة الـ White water (38.1 أقل من 52.5): الحل كان طلمبة 900rpm بـ SE أقل بحوالي 50%.</p>';
+ }
+ ids.forEach(i=>$('#'+i).addEventListener('input',up));up();
+})();
+
+/* ---------- belt temp ---------- */
+(function(){const r=$('#bT');function up(){const T=+r.value;$('#bTO').textContent=T+'°F';const m=Math.pow(2,(140-T)/18);
+ $('#beltLife').textContent=(m>=1?'×'+m.toFixed(2):'÷'+(1/m).toFixed(1));
+ const s=$('#beltState');s.textContent=T<=140?'سليم':T<=180?'زحلقة':'احتراق سيور';s.style.color=T<=140?'var(--ok)':T<=180?'var(--signal)':'var(--fail)';
+ $('#beltLines').setAttribute('stroke',T<=140?'var(--ink)':T<=180?'var(--signal)':'var(--fail)')}
+ r.addEventListener('input',up);up()})();
+
+/* ---------- AGMA ---------- */
+(function(){const s=$('#agma');const iso=[46,68,100,150,220,320,460,680];const ag=[1,2,3,4,5,6,7,8];
+ iso.forEach((v,i)=>{const x=10+i*53;const hl=ag[i]===5||ag[i]===7;
+  el('rect',{x,y:30,width:46,height:40,rx:4,fill:hl?'var(--machine)':'var(--machine-soft)'},s);
+  const a=el('text',{x:x+23,y:55,'text-anchor':'middle','font-size':13,class:'m','font-weight':600,fill:hl?'var(--panel)':'var(--ink)'},s);a.textContent=ag[i];
+  el('rect',{x,y:80,width:46,height:40,rx:4,fill:'var(--paper)',stroke:'var(--line)'},s);
+  const b=el('text',{x:x+23,y:105,'text-anchor':'middle','font-size':12,class:'m'},s);b.textContent=v});
+ const l1=el('text',{x:430,y:20,'text-anchor':'end','font-size':11,fill:'var(--muted)'},s);l1.textContent='AGMA';
+ const l2=el('text',{x:430,y:140,'text-anchor':'end','font-size':11,fill:'var(--muted)'},s);l2.textContent='ISO VG (cSt)';})();
+
+/* ---------- joint diagram ---------- */
+(function(){const svg=$('#jointSvg');const C=0.2;const Se=0.25; // endurance as fraction of target preload
+ function up(){const fi=+$('#fi').value/100, P=+$('#pext').value/100*1.1;$('#fiO').textContent=Math.round(fi*100)+'%';$('#pextO').textContent=Math.round(P*100/1.1)+'%';
+  const sep=P*(1-C)>fi; const Fb=sep?P:fi+C*P; const cyc=Fb-fi;
+  svg.innerHTML='';const X0=40,W=380,Y0=180,sc=120;
+  // time-domain bolt force
+  el('line',{x1:X0,y1:Y0,x2:X0+W,y2:Y0,stroke:'var(--ink)'},svg);
+  let d='',dP='';for(let k=0;k<=120;k++){const t=k/120;const p=P*(0.5-0.5*Math.cos(t*4*Math.PI));const f=p*(1-C)>fi?p:fi+C*p;d+=(k?'L':'M')+(X0+t*W)+' '+(Y0-f*sc);dP+=(k?'L':'M')+(X0+t*W)+' '+(Y0-p*sc)}
+  el('path',{d:dP,fill:'none',stroke:'var(--muted)','stroke-dasharray':'4 4'},svg);
+  el('path',{d,fill:'none',stroke:sep?'var(--fail)':'var(--machine)','stroke-width':3},svg);
+  el('line',{x1:X0,y1:Y0-fi*sc,x2:X0+W,y2:Y0-fi*sc,stroke:'var(--cool)','stroke-dasharray':'2 3'},svg);
+  const a=el('text',{x:X0+W,y:Y0-fi*sc-5,'text-anchor':'end','font-size':11,fill:'var(--cool)'},svg);a.textContent='Fi';
+  const b=el('text',{x:X0+4,y:16,'font-size':11},svg);b.textContent='قوة المسمار Fb مع الزمن';
+  const c=el('text',{x:X0+4,y:32,'font-size':11,fill:'var(--muted)'},svg);c.textContent='الخط المتقطع = الحمل الخارجي P';
+  const ok=cyc<=Se*0.5;
+  $('#jointVerdict').innerHTML='<div class="readout"><div class="ro"><span>الحمل الدوري على المسمار</span><b>'+Math.round(cyc*100)+'%</b></div><div class="ro"><span>حالة الوصلة</span><b style="font-family:var(--f-body);font-size:1rem;color:'+(sep?'var(--fail)':'var(--ok)')+'">'+(sep?'انفصلت (Separation)':'مضغوطة')+'</b></div></div><p style="font-size:.88rem;margin-top:8px">'+(sep?'الـ Preload قليل، فالوصلة بتتفتح والمسمار بيشيل الحمل الدوري كله. ده إجهاد انحناء معكوس (Reversed bending fatigue)، زي مسامير السلندر بالظبط.':'الوصلة بتمتص معظم الحمل، والمسمار بيشوف بس C·P (حوالي '+Math.round(C*100)+'% من الحمل). كده تفضل تحت حد التحمل وتاخد عمر لا نهائي.')+'</p>';
+ }
+ ['fi','pext'].forEach(i=>$('#'+i).addEventListener('input',up));up()})();
+
+/* ---------- bolt ring ---------- */
+(function(){const g=$('#boltRing');const bolts=[];let scatter=true;let ang=0;
+ // as-found: one half ~50%
+ const asFound=[1,1,.95,1.05,1,.9,.55,.5,.48,.52,.5,.55,.6,1,1.05,.98,1,1.02,.97,1];
+ for(let i=0;i<20;i++){const c=el('circle',{r:9,stroke:'var(--ink)','stroke-width':1.2},g);bolts.push(c)}
+ function draw(){bolts.forEach((b,i)=>{const a=ang+i/20*2*Math.PI;const x=160+92*Math.cos(a),y=150+92*Math.sin(a);b.setAttribute('cx',x.toFixed(1));b.setAttribute('cy',y.toFixed(1));
+  const s=Math.sin(a); // +1 bottom (tension)
+  const pre=scatter?asFound[i]:1;const danger=s>0.3&&pre<0.7;
+  b.setAttribute('fill',danger?'var(--fail)':s>0?'var(--fail-soft)':'var(--cool-soft)');
+  b.setAttribute('r',danger?11:9)})}
+ function tick(){ang+=0.012;draw();if(!reduce)requestAnimationFrame(tick)}
+ draw();if(!reduce)requestAnimationFrame(tick);
+ const s=$('#scatterBtn'),u=$('#uniformBtn');
+ s.addEventListener('click',()=>{scatter=true;press([s,u],s);$('#bAvg').textContent='28,415 lbf';$('#bSd').textContent='4,346 lbf';draw()});
+ u.addEventListener('click',()=>{scatter=false;press([s,u],u);$('#bAvg').textContent='37,013 lbf';$('#bSd').textContent='1,413 lbf';draw()});
+})();
+
+/* ---------- torque accuracy ---------- */
+(function(){const s=$('#torqueAcc');const d=[['بالإحساس',35],['مفتاح عزم Click',25],['Turn-of-nut',15],['ميكرومتر استطالة',4],['استطالة Ultrasonic',1]];
+ d.forEach(([t,v],i)=>{const y=12+i*36;const l=el('text',{x:410,y:y+17,'text-anchor':'end','font-size':12},s);l.textContent=t;
+  const w=v/35*240;const cx=150;el('rect',{x:cx-w/2,y:y+4,width:Math.max(w,3),height:18,rx:3,fill:v<=5?'var(--machine)':v<=15?'var(--signal)':'var(--fail)'},s);
+  el('line',{x1:cx,y1:y,x2:cx,y2:y+26,stroke:'var(--ink)'},s);
+  const vt=el('text',{x:cx+w/2+6,y:y+18,'font-size':11,class:'m'},s);vt.textContent='±'+v+'%'});})();
+
+/* ---------- case data ---------- */
+const CASES=[
+ {ch:3,t:'جنزير مرسّب كهروستاتيكي (Drag chain)',lvl:'L4',cost:'أكتر من $1M في سنتين',mode:'إجهاد انحناء أحادي الاتجاه بدورات كتير وإجهاد اسمي قليل، في الحلقة الوسطى. 75–80% من السطح Fatigue، والبداية عند خط الطرق (Forge line).',root:'سنون الـ Sprocket متآكلة، فالحلقة الوسطى مش متسندة. ده عمل إجهاد انحناء حوالي 47,000psi، والـ Se حوالي 21,000psi. الكسر حصل بعد 4–6 مليون دورة.',latent:'الفحص السنوي ما كانش بيبص على تآكل الـ Sprocket، ومحدش كان يعرف حساسية التصميم.',fix:'تغيير كل الـ Sprockets (أصلد ومقسومة)، جنازير متطابقة بتفاوت ±0.5" بدل ±2.75"، Shot peening، وإضافة فحص الـ Sprocket للـ PM.',res:'توفير مشروع Capex بـ 300 ألف دولار لتغيير نوع الجنزير. أول RCFA غيّر المورد وما نفعش.'},
+ {ch:3,t:'عمود ناقل لحاء (Bark reclaimer)',lvl:'L4',cost:'',mode:'إجهاد انحناء دوار مع تركيز إجهادات عند الـ Step (85% Fatigue)، وبعدها كسر عند ركن مجرى الخابور.',root:'Radius أقل من 1/64"، وآثار عدة بخشونة 150–200Ra، فـ Se قل حوالي 50%. ده تحت حمل Overhung حوالي 6,500lb وحوالي 10⁷ دورة (375 يوم).',latent:'عمود اتصنع في ورشة محلية من غير رسومات تفصيلية.',fix:'عمود 4140 TGP بمقاومة 120ksi، Radius مصقول تحت 16Ra، مجرى خابور بنهاية Radius كبير، وتحديث الرسمة.',res:'اشتغل سنين من غير أعطال. التفاصيل الصغيرة في التصميم بتفرق.'},
+ {ch:4,t:'رولمان مروحة احتراق',lvl:'L3/L4',cost:'$25K في السنة',mode:'زاوية تلامس عالية، ومنطقة حمل 360° على الحلقة الخارجية، وبقعة تقشر واحدة (Brinell) على ناحية الـ Floating end.',root:'غطا الـ Floating end ما اتخرطش (.875 بدل .750)، فبقى عندك رولمانين Held. ومع تمدد حراري حوالي .007" بقى فيه Preload. ونسيان الـ Wave spring، ومنسوب الزيت فوق نص الـ Bullseye.',latent:'مفيش إجراء Rebuild مفصّل للورشة.',fix:'خرط الغطا ورجوع الـ Wave spring، تعديل منسوب الزيت لنص الـ Bullseye، Spare في المخزن بـ BOM صح، وإجراء Rebuild.',res:'حرارة الرولمان نزلت حوالي 40°F.'},
+ {ch:4,t:'كسر رولمان Suction press roll',lvl:'L4',cost:'أكتر من $200K',mode:'كسور متعددة في الحلقات، شرخ دائري عند مجرى W33، والصف الداخلي اتسحق.',root:'تداخل Head/Shell عند Station II كان .024" T (الراس أكبر بـ .008")، فوق Housing fit .007" T. ده تخطى الـ RIC اللي ينفع يتشال (.011–.013"). كمان اتطبقت أهداف القميص البرونز على قميص ستانلس.',latent:'الورشة ما كانتش تعرف إن أهداف الستانلس مختلفة.',fix:'تصحيح الـ Fits، تعديل شيتات الـ Rebuild، توعية فنيي الورشة، وتشحيم كل أسبوعين (أو تشحيم مستمر).',res:'أول عطل من نوعه في 35 سنة من سجلات الورشة.'},
+ {ch:4,t:'رولمان موتور Pulper بقدرة 900HP',lvl:'L4',cost:'حوالي $150K',mode:'رولمان الـ DE لف على العمود وفي الـ Housing لحد ما الـ Rotor لمس الـ Stator، بعد تغيير الرولمان على طول.',root:'تداخل زايد شال الـ RIC (افتراض: عمود زيادة .001" فوق m5، فالتداخل وصل حوالي .0036" T). الفني سخّن الرولمان مرتين وبرضه ما دخلش.',latent:'ما بيتقاسش العمود قبل التركيب، وتصنيع العمود الأصلي.',fix:'إضافة قياسات الـ Fit لإجراء التغيير، توصيل إنذارات حرارة Multilin بالـ DCS، وتحسين تجهيز الشغلانة.',res:'أدلة ظرفية قوية من غير سبب قاطع، لكن الإجراءات اتنفذت.'},
+ {ch:4,t:'رولمان طلمبة تفريغ (Liquid ring)',lvl:'L2',cost:'حوالي $30K (من غير PdM كان ممكن ×10)',mode:'تقشر على صف واحد من رولمان Taper مزدوج، ومنطقة حمل أكبر من 180°، وشرخ في الحلقة الخارجية.',root:'فتحة الكبلنج بين العمودين أقل من .020" والمفروض .250"، والتمدد الحراري حوالي .012". العمودين خبطوا في بعض، والـ Thrust بتاع الجيربوكس اتنقل على الطلمبة.',latent:'إجراء التركيب ما بيحددش فتحة الكبلنج، وتفاوت طول العمود ±.125"، والطلمبة كانت Bolt-bound.',fix:'عمود أقصر، وخروم رجول بجلب لا مركزية، وتعديل إجراء التركيب.',res:'الأعطال اختفت. الدليل كان أثر عمود الجيربوكس والخابور مطبوع على عمود الطلمبة.'},
+ {ch:4,t:'رولمان داخلي Suction press roll',lvl:'L2/L3',cost:'',mode:'بقعة تقشر واحدة عليها انبعاج من رولر (Brinelling)، وبعيدة عن منطقة الحمل.',root:'Impact وقت تجميع الرول: الـ Suction box اتزق بفوركلفت صغير محتاج يجري عشان يدخله.',latent:'إجراء وأدوات التجميع.',fix:'طريقة تجميع جديدة للـ Suction box.',res:'"مصير الرولمان اتحدد قبل ما يلف أول لفة." الأعطال ما رجعتش.'},
+ {ch:4,t:'رولمان مروحة شفط Tissue',lvl:'L2/L3',cost:'$15K في السنة + مشروع بـ $400K',mode:'تقشر على صفين في رولمان كروي ذاتي التمحور (بعد ما التصويب اتصلح)، واهتزاز 1X من 0.6 لـ 1.0 in/s.',root:'رنين: السرعة 1,330rpm وقمة الرنين 1,440rpm، والمفروض نبعد ±15–20%، يعني نطاق 1,224–1,656rpm. والطارات المتآكلة رفعت السرعة فوق الحد الأقصى.',latent:'تصميم منظومة المروحة، والمسببات المساعدة: Mist bank مسدود، بلف شفط مقفول، تنضيف ضعيف، تشغيل شمال نقطة التصميم، وحنفية الشحم على مجرى W33 من غير مجرى في الرولمان.',fix:'تعديل الطارات عشان السرعة تنزل تحت 1,224rpm، Rotor جديد، تنضيف شهري، وتقوية الدكت.',res:'الاهتزاز قل 85%، ومفيش أعطال لمدة 5 سنين، ومشروع الـ 400 ألف دولار اتلغى.'},
+ {ch:5,t:'طلمبة White water',lvl:'L1–L4',cost:'$20K في السنة',mode:'تكهف على ناحية الشفط في التلات ريش (4 vanes)، وقمة عند تردد مرور الريش (4X vane pass)، وUltrasound 67dB.',root:'NPSHA = 38.1ft أقل من NPSHR = 21×2.5 = 52.5ft، لأن S = 13,756 وSE = 267×10⁶ يعني طاقة شفط عالية جداً.',latent:'تصميم واختيار الطلمبة من غير معيار لهامش الـ NPSH.',fix:'طلمبة جديدة 900rpm وSE = 141×10⁶ فالـ NPSHR بقى 11ft. وتعديل معايير الاختيار.',res:'الاهتزاز نزل من 0.5–0.7 لـ 0.08 in/s، واشتغلت أكتر من 10 سنين من غير صيانة. التصويب والاتزان سنين ما حلوش حاجة.'},
+ {ch:5,t:'طلمبة Stock dilution',lvl:'L3',cost:'',mode:'تنقير على الكيسينج والـ Wear plate جنب الـ Cutwater، واهتزاز في ماسورة الـ Recirculation.',root:'تشغيل عند حوالي 1,500gpm، والـ AOR من 1,800 لـ 6,200 والـ BEP عند 4,400. ده عمل تكهف إعادة دوران. والـ Impeller اتكبّر لـ 13.6" عشان يعوّض.',latent:'تغييرات في العملية من غير Management of Change، ومحابس تحكم تحت 30–40% فتح.',fix:'إضافة حوالي 1,500gpm طلب، Impeller أصغر، Setpoint أقل، كيسينج 316SS، ودراسة VFD (توفير حوالي $23K في السنة).',res:'الأعطال اختفت لما الطلمبة رجعت للـ POR.'},
+ {ch:5,t:'طلمبة Loop 1 dilution',lvl:'L3',cost:'$20K كل سنتين',mode:'تنقير على الكيسينج لحد التسريب كل حوالي 2.5 سنة.',root:'حالة تشغيل متقطعة: بلف ملو التانك بيفتح 100%، فالطلمبة تجري لـ 4,000gpm بره الـ AOR، والـ NPSHR يبقى 42 أكبر من الـ NPSHA اللي هو 30.',latent:'المنظومة مش مصممة إنها تفضل جوه الـ AOR في الحالة البديلة.',fix:'Orifice plate على خط التانك. والـ Continuous monitoring هو اللي كشف الـ Spikes.',res:'توفير حوالي $40K على 10 سنين. الغمر اتراجع: 96" مقابل حد أدنى 50".'},
+ {ch:5,t:'طلمبتين Rejects على التوازي',lvl:'L1',cost:'$20K في السنة طاقة',mode:'زيادة في الـ Vane pass ورخاوة، وتآكل في الـ Stuffing box.',root:'طلمبة #2 على 100% سرعة و#1 على 75%. ضغط المنظومة 90ft أعلى من الـ Shut-off بتاع #1 (78ft)، فطلمبة #1 بقت Dead head وحوالي 800gpm بيرجع فيها بالعكس.',latent:'اتصال VFD بالـ DCS غلط، ومرجعية FLA غلط على الشاشة.',fix:'مطابقة السرعات، تصحيح الـ DCS، وتدريب المشغلين على التشغيل على التوازي.',res:'من 145 BHP لـ 1,900gpm بقت 100 BHP لـ 2,300gpm.'},
+ {ch:5,t:'طلمبة تغذية Pressure screen',lvl:'L3',cost:'',mode:'5 أعطال ميكانيكال سيل في 9 شهور. عجينة دخلت يايات السيل، وتنقير على الـ Stuffing box.',root:'Stuffing box مخروطي من غير Throat bushing اتركب بداله المستقيم، مع Spikes في الضغط أكتر من 60psi وقت التشغيل (بره الـ AOR)، فالعمود اتحنى والوشوش اتفتحت.',latent:'تعديل في المنظومة اتعتبر "تحسين" من المصنّع، وتصميم ظروف بدء التشغيل.',fix:'Stuffing box مستقيم 316SS مع Bushing، ضغط مية السيل = SBP + 10–15psi، وتحسين استجابة الـ Control valve وقت التشغيل.',res:'السيلات ما رجعتش تعطل. السببين كانوا لازم يتواجدوا مع بعض.'},
+ {ch:6,t:'سيور Agitator تانك حمأة',lvl:'L4',cost:'حوالي $7K في السنة، وMTBF أقل من شهرين',mode:'السيور بتتحرق وتتقطع، والموتور سخن، وحصل Arc flash في كابينة البادئ.',root:'سعة السيور مش كفاية: طارة متآكلة حوالي .050"، شد قليل، طارة 5" أقل من حد NEMA (5.2")، الحمل الفعلي 27HP على موتور 20HP، والـ Overload مضبوط على 35.5A.',latent:'PM من غير قيم ولا عدة شد ولا تدريب.',fix:'طارة جديدة، شد وتصويب دقيقين، شيت تركيب سيور، عدة، وتدريب.',res:'حرارة السير من 220 لـ 127°F (عمر ×5)، والاهتزاز −50%، و6 سنين من غير تصحيحي.'},
+ {ch:6,t:'كسر طارة Pressure screen',lvl:'L4',cost:'حوالي $150K، و18 ساعة توقف',mode:'طارة 14" بـ 5 مجاري اتكسرت 3 قطع عند مسامير جلبة الـ TL. كسر هش بحمل زايد.',root:'Anti-seize على السطح المخروطي، وربط بـ Impact wrench، وتآكل .030" مع Powerband، وحمل عالي من Screen مسدود وقت التشغيل.',latent:'مفيش إجراء تركيب طارات، ولا عدة، ولا تدريب.',fix:'إجراء تركيب بقيم شد، قوالب تآكل، تدريب، وتصحيح الـ BOM.',res:'التصحيح اتعمم على سيور حرجة كتير في المصنع.'},
+ {ch:6,t:'جيربوكسات Paper roll',lvl:'L4',cost:'',mode:'تآكل شديد في أسنان الـ Pinion، وانهيار رولمانات، وتسريب زيت. ده بس في الجيربوكسات الجديدة.',root:'زيت 220cst والجيربوكس الجديد محتاج AGMA 7 (460)، ومنسوب الزيت غلط حسب وضع التركيب (أفقي/جانبي/مقلوب).',latent:'التحويل Falk ← Dodge من غير مراجعة مواصفات التزييت.',fix:'زيت EP 460، لوحات تزييت، منسوب حسب وضع التركيب، وتدريب.',res:'مثال على أهمية مراجعة التغيير (MOC) حتى في قطع الغيار.'},
+ {ch:6,t:'جيربوكس Coating backing roll',lvl:'L4',cost:'',mode:'كسر إجهاد في عمود الخرج، وتكسير أسنان Spiral bevel، وكسر Housing.',root:'لف الورقة على الـ Backing roll بيوقفه في أقل من 14.2 ثانية، فالعزم بيعدّي 200% من سعة جيربوكس 75HP. الماكينة كلها متصلة بتروس من غير Clutch.',latent:'تصميم الـ Line shaft، وتغيير راس الـ Coater اللي قلل الخلوص.',fix:'Torque-limiting coupling، وتسجيل العزم في الـ Historian، وتحسين كشف قطع الورقة، وفلترة للزيت.',res:'أعطال الـ Differential اختفت.'},
+ {ch:6,t:'جيربوكس Press roll ولع',lvl:'L4',cost:'حوالي $80K',mode:'رولمان الـ HS DE انهار حرارياً (الرولرز داخت في الحلقة)، وكسر عمود، وكسر غطا.',root:'منسوب الزيت قليل (7–7.5 جالون بدل 10): الزيت كان بيتسرب من مواسير التبريد المقطوعة على المجاري. والمواسير اتقطعت من تصرف مية 8gpm والمفروض 2–5.',latent:'مفيش زجاجة بيان، والـ Dipstick صعب توصله، وتحليل الزيت بيقول مية من 1,500 لـ 24,000ppm لمدة سنة.',fix:'ضبط مية التبريد، زجاجة بيان، مراجعة الـ Thermal HP (3 جيربوكسات ما محتاجوش تبريد)، وتحليل الزيت يدخل الاجتماع الشهري.',res:'توفير حوالي 11 مليون جالون مية في السنة.'},
+ {ch:7,t:'مسامير Dryer journal',lvl:'L4',cost:'لحد $350K للعطل الواحد',mode:'5 أعطال في 8 سنين. إجهاد انحناء معكوس عند أول سنة داخلة (حوالي السنة رقم 7) في نص الدائرة، والنص التاني Overload زي السوستة.',root:'Preload قليل ومتشتت: متوسط 28,415lbf بانحراف 4,346، ونص الدائرة حوالي 50% من الباقي.',latent:'مفيش إجراء ربط، ومفيش استخدام ثابت لمفتاح العزم.',fix:'Ultrasonic elongation (بعده: 37,013lbf بانحراف 1,413)، تزييت السن والراس، نمط نجمة متدرج، ومسامير B7.',res:'مفيش أعطال بعد كده، وما احتاجوش يعيدوا تصميم الـ Journal.'}
+];
+function caseHTML(c){return `<article class="case" data-ch="${c.ch}"><header><h4>${c.t}</h4><span class="tag">${c.lvl}</span></header>
+ <dl><dt>شكل العطل</dt><dd>${c.mode}</dd><dt>السبب الجذري</dt><dd>${c.root}</dd><dt>Latent</dt><dd>${c.latent}</dd><dt>الحل</dt><dd>${c.fix}</dd>${c.cost?`<dt>التكلفة</dt><dd>${c.cost}</dd>`:''}</dl>
+ <div class="result">${c.res}</div></article>`}
+$$('.cases[data-ch]').forEach(box=>{box.innerHTML=CASES.filter(c=>c.ch==box.dataset.ch).map(caseHTML).join('')});
+(function(){const box=$('#allCases');let f='all',q='';const btns=$$('#caseFilters .chip');
+ function r(){const list=CASES.filter(c=>(f==='all'||c.ch==f)&&(!q||JSON.stringify(c).includes(q)));box.innerHTML=list.length?list.map(caseHTML).join(''):'<p class="note">مفيش حالة بالكلمة دي.</p>'}
+ btns.forEach(b=>b.addEventListener('click',()=>{f=b.dataset.f;press(btns,b);r()}));
+ $('#caseQ').addEventListener('input',e=>{q=e.target.value.trim();r()});r()})();
+
+/* ---------- rail highlight ---------- */
+(function(){const links=$$('#rail a');const map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('on'));const a=map.get(e.target.id);if(a){a.classList.add('on');try{a.scrollIntoView({block:'nearest',inline:'center'})}catch(_){}}}})},{rootMargin:'-40% 0px -55% 0px'});
+  $$('section.ch').forEach(s=>io.observe(s))}})();
+})();
+</script>
+
+</body>
+</html>
